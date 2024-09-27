@@ -1,0 +1,16 @@
+@import 'reset.scss';
+@import 'var.scss';
+@import 'common.scss';
+@import 'component.scss';
+@import 'font.scss';
+
+:root,
+:root[color-scheme='light'] {
+	font-feature-settings: 'ss01' !important;
+
+	body {
+		margin: 0;
+		overflow: hidden;
+		user-select: none;
+	}
+}

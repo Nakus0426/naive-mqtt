@@ -1,0 +1,187 @@
+// 浅色主题、默认主题
+:root[color-scheme='light'],
+:root {
+	--border-color: #dddddd;
+	--divider-color: #e8e8e8;
+
+	// Scrollbar
+	.os-scrollbar {
+		z-index: 1;
+		--os-padding-perpendicular: 3px !important;
+		--os-padding-axis: 3px !important;
+		--os-handle-bg: var(--scrollbar-color) !important;
+		--os-handle-bg-hover: var(--scrollbar-color-hover) !important;
+		--os-handle-bg-active: var(--scrollbar-color-hover) !important;
+	}
+
+	.os-scrollbar-handle {
+		cursor: pointer;
+	}
+
+	::-webkit-scrollbar {
+		width: 12px;
+		height: 12px;
+	}
+
+	::-webkit-scrollbar-corner {
+		display: none;
+	}
+
+	::-webkit-scrollbar-thumb {
+		border-radius: 6px;
+		border: 3px solid transparent;
+		background-clip: content-box;
+		background-color: var(--scrollbar-color);
+
+		&:hover {
+			background-color: var(--scrollbar-color-hover);
+		}
+	}
+
+	// Animate.css
+	& {
+		--animate-duration: 0.2s !important;
+	}
+
+	// Selection
+	::selection {
+		background-color: var(--primary-color);
+		color: var(--base-color);
+	}
+
+	// Input
+	.n-input {
+		&__prefix,
+		&__suffix {
+			gap: 5px;
+		}
+	}
+
+	// Dialog
+	.n-dialog {
+		width: auto;
+		min-width: 434px;
+		padding: 0;
+		overflow: hidden;
+		border: var(--n-border);
+
+		&__title {
+			padding: 20px 26px 0 26px;
+		}
+
+		&__content {
+			margin: 0;
+			padding: 20px 26px;
+		}
+
+		&__action {
+			padding: 20px 26px;
+			background-color: rgb(250, 250, 252);
+			border-top: 1px solid var(--divider-color);
+		}
+	}
+
+	// Dropdown
+	.n-dropdown-menu {
+		border: 1px solid var(--border-color);
+	}
+
+	.n-base-select-menu {
+		border: 1px solid var(--border-color);
+	}
+
+	// Tooltip
+	.n-tooltip {
+		border: none !important;
+
+		.n-popover-arrow {
+			border: none;
+		}
+	}
+
+	// Slider
+	.n-slider {
+		&-handle-indicator {
+			border: 1px solid var(--border-color);
+		}
+	}
+
+	// Popover
+	.n-popover {
+		border: 1px solid var(--border-color);
+
+		&-arrow {
+			border: 1px solid var(--border-color);
+		}
+	}
+
+	// Data Table
+	.n-data-table {
+		height: 100%;
+	}
+
+	// Message
+	.n-message {
+		border: 1px solid var(--border-color);
+	}
+
+	// Drawer
+	.n-drawer {
+		&__resize-trigger {
+			z-index: 2;
+		}
+
+		&--left-placement {
+			border-right: 1px solid var(--border-color);
+		}
+
+		&--right-placement {
+			border-left: 1px solid var(--border-color);
+		}
+
+		&--top-placement {
+			border-bottom: 1px solid var(--border-color);
+		}
+
+		&--bottom-placement {
+			border-top: 1px solid var(--border-color);
+		}
+	}
+
+	// Descriptions
+	.n-descriptions {
+		&-table-content {
+			display: flex !important;
+
+			&__label {
+				display: flex;
+				align-items: center;
+			}
+
+			&__content {
+				flex: 1;
+				display: flex !important;
+				align-items: center;
+				justify-content: flex-end;
+			}
+		}
+	}
+
+	// Notification
+	.n-notification {
+		border: 1px solid var(--border-color);
+	}
+}
+
+// 深色主题
+:root[color-scheme='dark'] {
+	--border-color: #3f3f46;
+	--divider-color: #27272a;
+
+	// Dialog
+	.n-dialog {
+		&__action {
+			background-color: rgba(255, 255, 255, 0.06);
+		}
+	}
+}
