@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain, nativeTheme } from 'electron'
 import { createWindow } from './create-window.ts'
 import { store } from './store.ts'
 import { createRequire } from 'node:module'
+import { Main } from './interface.ts'
 
 const require = createRequire(import.meta.url)
 
@@ -19,8 +20,10 @@ app.on('activate', () => {
 
 function createMainWindow() {
 	const mainWindow = createWindow()
+	nativeTheme.themeSource = store.get('theme') || 'system'
 	store.set('theme', nativeTheme.themeSource)
-	ipcMain.on('update-theme', (event, theme) => {
+
+	ipcMain.on(Main.UpdateTheme, (event, theme) => {
 		nativeTheme.themeSource = theme
 		mainWindow.setTitleBarOverlay({
 			color: 'rgba(0, 0, 0, 0)',
@@ -28,4 +31,6 @@ function createMainWindow() {
 		})
 		store.set('theme', theme)
 	})
+	ipcMain.on(Main.GetTheme, event => (event.returnValue = nativeTheme.themeSource))
+	ipcMain.on(Main.GetLocale, event => (event.returnValue = app.getLocale()))
 }

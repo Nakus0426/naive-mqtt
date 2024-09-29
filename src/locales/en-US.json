@@ -1,0 +1,23 @@
+{
+	"language": "English",
+	"main": {
+		"menu": {
+			"connection": "Connection",
+			"script": "Script",
+			"collapse": "Expand menu",
+			"expand": "Collapse menu",
+			"setting": "Setting"
+		}
+	},
+	"setting": {
+		"appearance": {
+			"title": "Appearance",
+			"theme": {
+				"title": "Theme"
+			},
+			"language": {
+				"title": "Language"
+			}
+		}
+	}
+}

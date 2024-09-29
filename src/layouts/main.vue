@@ -2,7 +2,10 @@
 import { useAppStore } from '@/store/modules/app'
 import { ConnectionRoute, ScriptRoute, SettingRoute } from '@/router/routes'
 import { type RouteRecordRaw, type RouteRecordNameGeneric } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { type MessageSchema } from '@/configs/i18n'
 
+const { t } = useI18n<{ message: MessageSchema }>()
 const appStore = useAppStore()
 const router = useRouter()
 const route = useRoute()
@@ -48,46 +51,51 @@ function handleRouteChange(to: RouteRecordRaw) {
 	</DefineMenuItem>
 
 	<NElement class="main">
-		<div class="menu">
-			<div class="menu_prefix"></div>
-			<div class="menu_center">
-				<MenuItem
-					icon="tabler:layers-linked"
-					label="连接"
-					:name="ConnectionRoute.name"
-					@click="handleRouteChange(ConnectionRoute)"
-				/>
-				<MenuItem
-					icon="tabler:code-asterisk"
-					label="脚本"
-					:name="ScriptRoute.name"
-					@click="handleRouteChange(ScriptRoute)"
-				/>
-			</div>
-			<div class="menu_suffix">
-				<MenuItem
-					:icon="`tabler:layout-sidebar-${appStore.isMenuCollapsed ? 'right' : 'left'}-collapse`"
-					:label="appStore.isMenuCollapsed ? '展开菜单' : '收起菜单'"
-					@click="appStore.isMenuCollapsed = !appStore.isMenuCollapsed"
-				/>
-				<MenuItem
-					icon="tabler:settings"
-					label="设置"
-					:name="SettingRoute.name"
-					@click="handleRouteChange(SettingRoute)"
-				/>
-			</div>
+		<div class="main_header">
+			<img src="@/assets/images/logo.svg" />
+			<span>Naive MQTT</span>
 		</div>
-		<div class="content">
-			<RouterView>
-				<template #default="{ Component }">
-					<Transition :name="transitionName">
-						<KeepAlive>
-							<component :is="Component" />
-						</KeepAlive>
-					</Transition>
-				</template>
-			</RouterView>
+		<div class="main_body">
+			<div class="menu">
+				<div class="menu_center">
+					<MenuItem
+						icon="tabler:layers-linked"
+						:label="t('main.menu.connection')"
+						:name="ConnectionRoute.name"
+						@click="handleRouteChange(ConnectionRoute)"
+					/>
+					<MenuItem
+						icon="tabler:code-asterisk"
+						:label="t('main.menu.script')"
+						:name="ScriptRoute.name"
+						@click="handleRouteChange(ScriptRoute)"
+					/>
+				</div>
+				<div class="menu_suffix">
+					<MenuItem
+						:icon="`tabler:layout-sidebar-${appStore.isMenuCollapsed ? 'right' : 'left'}-collapse`"
+						:label="appStore.isMenuCollapsed ? t('main.menu.expand') : t('main.menu.collapse')"
+						@click="appStore.isMenuCollapsed = !appStore.isMenuCollapsed"
+					/>
+					<MenuItem
+						icon="tabler:settings"
+						:label="t('main.menu.setting')"
+						:name="SettingRoute.name"
+						@click="handleRouteChange(SettingRoute)"
+					/>
+				</div>
+			</div>
+			<OverlayScrollbar class="content">
+				<RouterView>
+					<template #default="{ Component }">
+						<Transition :name="transitionName">
+							<KeepAlive>
+								<component :is="Component" />
+							</KeepAlive>
+						</Transition>
+					</template>
+				</RouterView>
+			</OverlayScrollbar>
 		</div>
 	</NElement>
 </template>
@@ -97,15 +105,38 @@ function handleRouteChange(to: RouteRecordRaw) {
 	height: 100%;
 	width: 100%;
 	display: flex;
+	flex-direction: column;
 	-webkit-app-region: drag;
+
+	&_header {
+		height: 30px;
+		display: flex;
+		gap: 8px;
+		align-items: center;
+		padding-left: 16px;
+		font-size: var(--font-size-small);
+
+		img {
+			height: 16px;
+			width: 16px;
+		}
+	}
+
+	&_body {
+		flex: 1;
+		display: flex;
+	}
 }
 
 .menu {
 	display: flex;
 	flex-direction: column;
+	gap: 8px;
 	padding: 8px;
 
 	&_prefix {
+		display: flex;
+		justify-content: center;
 	}
 
 	&_center {
@@ -147,7 +178,7 @@ function handleRouteChange(to: RouteRecordRaw) {
 	flex: 1;
 	display: flex;
 	flex-direction: column;
-	margin: 30px 6px 6px 0;
+	margin: 0px 6px 6px 0px;
 	border: 1px solid var(--border-color);
 	border-radius: var(--border-radius);
 	background-color: var(--body-color);
