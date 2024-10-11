@@ -2,10 +2,10 @@
 	"language": "English",
 	"main": {
 		"menu": {
-			"connection": "Connection",
+			"connection": "Connections",
 			"script": "Script",
-			"collapse": "Expand menu",
-			"expand": "Collapse menu",
+			"collapse": "Collapse menu",
+			"expand": "Expand menu",
 			"setting": "Setting"
 		}
 	},
@@ -13,11 +13,18 @@
 		"appearance": {
 			"title": "Appearance",
 			"theme": {
-				"title": "Theme"
+				"title": "Theme",
+				"system": "Follow the system",
+				"light": "Light",
+				"dark": "Dark"
 			},
 			"language": {
 				"title": "Language"
 			}
 		}
+	},
+	"connection": {
+		"newConnection": "New Connection",
+		"newGroup": "New Group"
 	}
 }

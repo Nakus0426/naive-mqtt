@@ -1,9 +1,22 @@
 <script setup lang="ts">
-const count = ref(0)
+import Side from './side.vue'
 </script>
 
 <template>
-	<h1>{{ count }}</h1>
+	<div class="connection">
+		<Side />
+		<div class="content"></div>
+	</div>
 </template>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.connection {
+	height: 100%;
+	width: 100%;
+	display: flex;
+}
+
+.content {
+	flex: 1;
+}
+</style>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useAppStore } from '@/store/modules/app'
-import { app, type NativeTheme } from 'electron'
+import { type NativeTheme } from 'electron'
 import ThemeSystemImage from '@/assets/images/theme-system.svg'
 import ThemeLightImage from '@/assets/images/theme-light.svg'
 import ThemeDarkImage from '@/assets/images/theme-dark.svg'
@@ -14,7 +14,9 @@ const appStore = useAppStore()
 const [DefineCell, Cell] = createReusableTemplate<{ title: string }>({ inheritAttrs: false })
 const [DefineCellItem, CellItem] = createReusableTemplate<{ label: string }>()
 
-const [DefineThemeRadio, ThemeRadio] = createReusableTemplate<{ theme: NativeTheme['themeSource'] }>()
+const [DefineThemeRadio, ThemeRadio] = createReusableTemplate<{ theme: NativeTheme['themeSource']; title: string }>({
+	inheritAttrs: false,
+})
 const themeRadioImageMap = { system: ThemeSystemImage, light: ThemeLightImage, dark: ThemeDarkImage }
 
 function handleThemeUpdate(theme: NativeTheme['themeSource']) {
@@ -52,10 +54,11 @@ function handleLocaleUpdate(value: string) {
 			</div>
 		</DefineCellItem>
 
-		<DefineThemeRadio v-slot="{ theme }">
+		<DefineThemeRadio v-slot="{ theme, title }">
 			<div class="theme-radio_item" :selected="appStore.theme === theme" @click="handleThemeUpdate(theme)">
 				<img :src="themeRadioImageMap[theme]" />
 				<Icon height="20" width="20" color="var(--primary-color)" icon="material-symbols:check-circle-rounded" />
+				<span>{{ title }}</span>
 			</div>
 		</DefineThemeRadio>
 
@@ -66,9 +69,9 @@ function handleLocaleUpdate(value: string) {
 		<Cell :title="t('setting.appearance.title')">
 			<CellItem :label="t('setting.appearance.theme.title')">
 				<div class="theme-radio">
-					<ThemeRadio theme="system" />
-					<ThemeRadio theme="light" />
-					<ThemeRadio theme="dark" />
+					<ThemeRadio theme="system" :title="t('setting.appearance.theme.system')" />
+					<ThemeRadio theme="light" :title="t('setting.appearance.theme.light')" />
+					<ThemeRadio theme="dark" :title="t('setting.appearance.theme.dark')" />
 				</div>
 			</CellItem>
 			<CellItem :label="t('setting.appearance.language.title')">
@@ -103,7 +106,7 @@ function handleLocaleUpdate(value: string) {
 		font-weight: bold;
 		padding: 8px 16px;
 		border-bottom: 1px solid var(--border-color);
-		background-color: var(--body-color);
+		background-color: var(--card-color);
 	}
 
 	&_body {
@@ -160,6 +163,17 @@ function handleLocaleUpdate(value: string) {
 			right: 4px;
 			bottom: 4px;
 			display: none;
+		}
+
+		span {
+			position: absolute;
+			top: 0;
+			left: 0;
+			padding: 0 4px;
+			font-size: var(--font-size-small);
+			border-bottom-right-radius: var(--border-radius);
+			background-color: var(--primary-color);
+			color: var(--base-color);
 		}
 	}
 }

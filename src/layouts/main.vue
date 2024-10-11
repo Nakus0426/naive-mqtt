@@ -43,7 +43,7 @@ function handleRouteChange(to: RouteRecordRaw) {
 					<template #icon>
 						<Icon height="20" width="20" :icon />
 					</template>
-					{{ label }}
+					<NPerformantEllipsis>{{ label }}</NPerformantEllipsis>
 				</NButton>
 			</template>
 			{{ label }}
@@ -125,6 +125,7 @@ function handleRouteChange(to: RouteRecordRaw) {
 	&_body {
 		flex: 1;
 		display: flex;
+		overflow: hidden;
 	}
 }
 
@@ -181,7 +182,7 @@ function handleRouteChange(to: RouteRecordRaw) {
 	margin: 0px 6px 6px 0px;
 	border: 1px solid var(--border-color);
 	border-radius: var(--border-radius);
-	background-color: var(--body-color);
+	background-color: var(--card-color);
 	box-shadow: 1px 1px 3px 0px var(--divider-color);
 	-webkit-app-region: no-drag;
 }
