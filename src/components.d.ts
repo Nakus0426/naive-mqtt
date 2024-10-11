@@ -22,6 +22,7 @@ declare module 'vue' {
     NPerformantEllipsis: typeof import('naive-ui')['NPerformantEllipsis']
     NSelect: typeof import('naive-ui')['NSelect']
     NTooltip: typeof import('naive-ui')['NTooltip']
+    NTree: typeof import('naive-ui')['NTree']
     OverlayScrollbar: typeof import('./components/overlay-scrollbar.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']

@@ -1,8 +1,14 @@
 <script setup lang="tsx">
 import { useI18n } from 'vue-i18n'
 import { type MessageSchema } from '@/configs/i18n'
-import { type DropdownOption } from 'naive-ui'
+import { type DropdownOption, NPerformantEllipsis, NText } from 'naive-ui'
 import { Icon } from '@iconify/vue'
+import {
+	type RenderPrefix,
+	type RenderLabel,
+	type TreeOverrideNodeClickBehavior,
+	type TreeNodeProps,
+} from 'naive-ui/lib/tree/src/interface'
 
 const { t } = useI18n<{ message: MessageSchema }>()
 
@@ -17,33 +23,136 @@ function handleHeaderStickyUpdate(direction: 'top' | 'bottom', value: boolean) {
 }
 //#endregion
 
-const addButtonOptions: Array<DropdownOption> = [
+//#region 新建按钮
+const newButtonOptions: Array<DropdownOption> = [
 	{
 		label: () => t('connection.newConnection'),
-		icon: () => <Icon height="14" width="14" icon="tabler:layers-linked" />,
+		icon: () => <Icon height="16" width="16" icon="tabler:layers-linked" />,
 		key: 'connection',
 	},
 	{
 		label: () => t('connection.newGroup'),
-		icon: () => <Icon height="14" width="14" icon="tabler:folder" />,
+		icon: () => <Icon height="16" width="16" icon="tabler:folder" />,
 		key: 'group',
 	},
 ]
+//#endregion
+
+//#region 连接树渲染
+const tree = [
+	{
+		key: '1',
+		label: 'group1',
+		isLeaf: false,
+		children: [{ key: '1-1', label: 'connection1', isLeaf: true }],
+	},
+	{ key: '2', label: 'group1', isLeaf: false, children: [] },
+	{ key: '3', label: 'connection1', isLeaf: true },
+]
+
+const treePrefixRender: RenderPrefix = ({ option }) => {
+	return (
+		<Icon
+			height="16"
+			width="16"
+			icon={option.isLeaf ? 'tabler:point-filled' : 'tabler:folder'}
+			color={option.isLeaf ? 'var(--text-color-2)' : 'var(--primary-color)'}
+		/>
+	)
+}
+const treeLabelRender: RenderLabel = ({ option }) => (
+	<NPerformantEllipsis tooltip={{ width: 'trigger' }}>{option.label}</NPerformantEllipsis>
+)
+const treeOverrideDefaultNodeClickBehavior: TreeOverrideNodeClickBehavior = ({ option }) => {
+	return option.isLeaf ? 'default' : 'toggleExpand'
+}
+//#endregion
+
+//#region 连接树右键菜单
+const treeDropdownPosition = ref({ x: null, y: null })
+const treeDropdownVisible = ref(false)
+const treeDropdownOptions = ref<Array<DropdownOption>>()
+enum TreeDropdownOptionsKey {
+	Rename = 'rename',
+	Delete = 'delete',
+	Edit = 'edit',
+	Duplicate = 'duplicate',
+}
+
+const treeNodeProps: TreeNodeProps = ({ option }) => {
+	return {
+		onContextmenu({ clientX, clientY }) {
+			treeDropdownPosition.value = { x: clientX, y: clientY }
+			treeDropdownVisible.value = true
+			treeDropdownOptions.value = option.isLeaf
+				? [
+						{
+							label: t('common.duplicate'),
+							key: TreeDropdownOptionsKey.Duplicate,
+							icon: () => <Icon height="16" width="16" icon="tabler:copy" />,
+						},
+						{
+							label: t('common.edit'),
+							key: TreeDropdownOptionsKey.Edit,
+							icon: () => <Icon height="16" width="16" icon="tabler:edit" />,
+						},
+						{ key: 'divider', type: 'divider' },
+						{
+							label: () => <NText type="error">{t('common.delete')}</NText>,
+							key: TreeDropdownOptionsKey.Delete,
+							icon: () => <Icon height="16" width="16" color="var(--error-color)" icon="tabler:trash" />,
+						},
+					]
+				: [
+						{
+							label: t('common.rename'),
+							key: TreeDropdownOptionsKey.Rename,
+							icon: () => <Icon height="16" width="16" icon="tabler:edit" />,
+						},
+						{ key: 'divider', type: 'divider' },
+						{
+							label: () => <NText type="error">{t('common.delete')}</NText>,
+							key: TreeDropdownOptionsKey.Delete,
+							icon: () => <Icon height="16" width="16" color="var(--error-color)" icon="tabler:trash" />,
+						},
+					]
+		},
+	}
+}
+//#endregion
 </script>
 
 <template>
 	<div class="side" :collapse="sideCollapsed">
 		<div class="header" :sticky="headerSticky">
 			<span>{{ t('main.menu.connection') }}</span>
-			<NDropdown trigger="click" :options="addButtonOptions" size="small">
+			<NDropdown trigger="click" :options="newButtonOptions" size="small" placement="bottom-start">
 				<NButton size="tiny">
 					<Icon icon="tabler:plus" />
 				</NButton>
 			</NDropdown>
 		</div>
 		<OverlayScrollbar class="body" @sticky="handleHeaderStickyUpdate">
-			<h1 v-for="item in 50">Body</h1>
+			<NTree
+				:data="tree"
+				block-line
+				expand-on-click
+				:render-prefix="treePrefixRender"
+				:render-label="treeLabelRender"
+				:override-default-node-click-behavior="treeOverrideDefaultNodeClickBehavior"
+				:node-props="treeNodeProps"
+			/>
 		</OverlayScrollbar>
+		<NDropdown
+			:options="treeDropdownOptions"
+			:show="treeDropdownVisible"
+			:x="treeDropdownPosition.x"
+			:y="treeDropdownPosition.y"
+			placement="bottom-start"
+			size="small"
+			to=".main"
+			@clickoutside="treeDropdownVisible = false"
+		/>
 		<button class="side_collapse" :collapse="sideCollapsed" @click="sideCollapsed = !sideCollapsed">
 			<Icon height="18" width="18" icon="tabler:chevron-left" />
 		</button>
@@ -134,5 +243,16 @@ const addButtonOptions: Array<DropdownOption> = [
 
 .body {
 	flex: 1;
+	padding: 0px 8px;
+
+	:deep(.n-tree-node-switcher),
+	:deep(.n-tree-node-content) {
+		height: 40px;
+		min-height: 40px;
+	}
+
+	:deep(.n-tree-node-content__text) {
+		overflow: hidden;
+	}
 }
 </style>

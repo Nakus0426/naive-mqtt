@@ -35,6 +35,7 @@ export const useConnectionsStore = defineStore('CONNECTIONS', () => {
 					label: name,
 					key: id,
 					children: generateConnectionTree(connections.filter(({ groupId }) => groupId === id)),
+					isLeaf: false,
 				}))
 	}
 

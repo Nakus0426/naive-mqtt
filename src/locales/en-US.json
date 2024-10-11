@@ -1,5 +1,12 @@
 {
 	"language": "English",
+	"common": {
+		"rename": "Rename",
+		"delete": "Delete",
+		"edit": "Edit",
+		"copy": "Copy",
+		"duplicate": "Duplicate"
+	},
 	"main": {
 		"menu": {
 			"connection": "Connections",
@@ -14,7 +21,7 @@
 			"title": "Appearance",
 			"theme": {
 				"title": "Theme",
-				"system": "Follow the system",
+				"system": "Auto",
 				"light": "Light",
 				"dark": "Dark"
 			},
