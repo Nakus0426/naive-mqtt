@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, nativeTheme } from 'electron'
+import { app, BrowserWindow, ipcMain, nativeTheme, dialog } from 'electron'
 import { createWindow } from './create-window.ts'
 import { store } from './store.ts'
 import { createRequire } from 'node:module'
@@ -40,3 +40,8 @@ ipcMain.on(Main.UpdateTheme, (_event, theme) => {
 ipcMain.on(Main.GetTheme, event => (event.returnValue = nativeTheme.themeSource))
 
 ipcMain.on(Main.GetLocale, event => (event.returnValue = app.getLocale()))
+
+ipcMain.handle(Main.OpenFileDialog, async (event, options) => {
+	const { filePaths } = await dialog.showOpenDialog(mainWindow, options)
+	return filePaths
+})

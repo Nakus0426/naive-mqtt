@@ -1,4 +1,4 @@
-import { type NativeTheme } from 'electron'
+import { type NativeTheme, type OpenDialogOptions, type OpenDialogReturnValue } from 'electron'
 import { type CreateClientOptions } from './main/mqtt.ts'
 import { type Response } from './main/utils.ts'
 
@@ -8,6 +8,7 @@ export interface ElectronAPI {
 	getLocale: () => string
 	createClient: (options: CreateClientOptions) => Promise<Response>
 	onConnect: (callback: () => void) => void
+	openFileDialog: (options: OpenDialogOptions) => Promise<OpenDialogReturnValue['filePaths']>
 }
 
 declare global {

@@ -9,4 +9,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
 	createClient: (...args) => ipcRenderer.invoke(Main.CreateClient, ...args),
 	onConnect: (callback: (...args: any[]) => void) =>
 		ipcRenderer.on(Main.OnConnect, (_event, ...args) => callback(...args)),
+	openFileDialog: (...args) => ipcRenderer.invoke(Main.OpenFileDialog, ...args),
 } as ElectronAPI)

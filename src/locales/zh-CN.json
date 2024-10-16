@@ -5,7 +5,13 @@
 		"delete": "删除",
 		"edit": "编辑",
 		"copy": "复制",
-		"duplicate": "复制"
+		"duplicate": "复制",
+		"generate": "生成",
+		"seconds": "秒",
+		"milliseconds": "毫秒",
+		"qos_0": "最多一次",
+		"qos_1": "至少一次",
+		"qos_2": "仅一次"
 	},
 	"main": {
 		"menu": {
@@ -31,7 +37,60 @@
 		}
 	},
 	"connection": {
-		"newConnection": "新建连接",
-		"newGroup": "新建分组"
+		"new_connection": "新建连接",
+		"new_group": "新建分组",
+		"new_connectionDialog": {
+			"general": {
+				"title": "通用",
+				"name": "名称",
+				"clientId": "客户端 ID",
+				"host": "服务器地址",
+				"port": "端口",
+				"username": "用户名",
+				"password": "密码",
+				"ssl": "SSL/TLS",
+				"ssl_secure": "SSL 安全",
+				"alpn": "ALPN",
+				"certificate": "证书类型",
+				"ca_server_signed": "CA证书",
+				"ca_self_signed": "自签证书",
+				"ca_file": "CA 文件",
+				"client_certificate_file": "客户端证书文件",
+				"client_key_file": "客户端密钥文件",
+				"select_file": "选择文件"
+			},
+			"advanced": {
+				"title": "高级",
+				"mqtt_version": "MQTT版本",
+				"connect_timeout": "连接超时时长",
+				"keep_alive": "Keep Alive",
+				"reconnect_period": "重连周期",
+				"clean_start": "Clean Start",
+				"session_expiry_interval": "会话过期时间",
+				"clean_session": "Clean Session",
+				"receive_maximum": "接收最大数值",
+				"maximum_packet_size": "最大数据包大小",
+				"topic_alias_maximum": "主题别名最大值",
+				"request_response_info": "请求响应信息",
+				"request_problem_info": "请求失败信息",
+				"user_properties": "用户属性",
+				"never_expire": "永不过期",
+				"key": "键",
+				"value": "值"
+			},
+			"last_will_and_testament": {
+				"title": "遗嘱消息",
+				"topic": "主题",
+				"qos": "QoS",
+				"retain": "保留标志",
+				"payload": "内容",
+				"payload_format_indicator": "有效载荷指示器",
+				"will_delay_interval": "延迟时间",
+				"message_expiry_interval": "过期时间",
+				"content_type": "内容类型",
+				"response_topic": "响应主题",
+				"correlation_data": "对比数据"
+			}
+		}
 	}
 }

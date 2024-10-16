@@ -49,6 +49,15 @@
 		color: var(--base-color);
 	}
 
+	// Select
+	.n-base-select {
+		&-option {
+			&__content {
+				flex: 1;
+			}
+		}
+	}
+
 	// Input
 	.n-input {
 		&__prefix,
@@ -71,7 +80,6 @@
 
 		&__content {
 			margin: 0;
-			padding: 20px 26px;
 		}
 
 		&__action {

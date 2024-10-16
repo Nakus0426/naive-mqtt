@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { useAppStore } from '@/store/modules/app'
 import { type NativeTheme } from 'electron'
-import ThemeSystemImage from '@/assets/images/theme-system.svg'
-import ThemeLightImage from '@/assets/images/theme-light.svg'
-import ThemeDarkImage from '@/assets/images/theme-dark.svg'
+import ThemeSystemImage from '@/assets/images/theme_system.svg'
+import ThemeLightImage from '@/assets/images/theme_light.svg'
+import ThemeDarkImage from '@/assets/images/theme_dark.svg'
 import { useI18n } from 'vue-i18n'
 import { type MessageSchema } from '@/configs/i18n'
 import { SelectBaseOption } from 'naive-ui/es/select/src/interface'

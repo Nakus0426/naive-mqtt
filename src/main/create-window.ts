@@ -25,8 +25,8 @@ const windowPool = new Map<string, BrowserWindow>()
 export function createWindow(options?: Options) {
 	const {
 		id = nanoid(),
-		width = 800,
-		height = 600,
+		width = 1000,
+		height = 800,
 		minWidth = 800,
 		minHeight = 600,
 		resizable = true,

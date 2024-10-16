@@ -5,4 +5,5 @@ export enum Main {
 	CreateClient = 'create-client',
 	Subscribe = 'subscribe',
 	OnConnect = 'on-connect',
+	OpenFileDialog = 'open-file-dialog',
 }

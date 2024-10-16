@@ -10,7 +10,11 @@ enum StoreKey {
 
 export type Group = { id: string; name: string }
 
-export type Connection = { name: string; groupId: Group['id'] } & CreateClientOptions
+export type Connection = {
+	name: string
+	groupId: Group['id']
+} & Record<string, any> &
+	CreateClientOptions
 
 /**
  * 连接

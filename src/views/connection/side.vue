@@ -9,6 +9,8 @@ import {
 	type TreeOverrideNodeClickBehavior,
 	type TreeNodeProps,
 } from 'naive-ui/lib/tree/src/interface'
+import { type OnUpdateValue } from 'naive-ui/es/select/src/interface'
+import NewConnectionDialog from './new-connection-dialog.vue'
 
 const { t } = useI18n<{ message: MessageSchema }>()
 
@@ -24,18 +26,27 @@ function handleHeaderStickyUpdate(direction: 'top' | 'bottom', value: boolean) {
 //#endregion
 
 //#region 新建按钮
-const newButtonOptions: Array<DropdownOption> = [
+const newConnectionDialogRef = useTemplateRef('newConnectionDialog')
+enum NewButtonDropdownOptionsKey {
+	Connection = 'connection',
+	Group = 'group',
+}
+const newButtonDropdownOptions: Array<DropdownOption> = [
 	{
-		label: () => t('connection.newConnection'),
+		label: () => t('connection.new_connection'),
 		icon: () => <Icon height="16" width="16" icon="tabler:layers-linked" />,
-		key: 'connection',
+		key: NewButtonDropdownOptionsKey.Connection,
 	},
 	{
-		label: () => t('connection.newGroup'),
+		label: () => t('connection.new_group'),
 		icon: () => <Icon height="16" width="16" icon="tabler:folder" />,
-		key: 'group',
+		key: NewButtonDropdownOptionsKey.Group,
 	},
 ]
+
+const handleNewButtonSelect: OnUpdateValue = key => {
+	if (key === NewButtonDropdownOptionsKey.Connection) newConnectionDialogRef.value.open()
+}
 //#endregion
 
 //#region 连接树渲染
@@ -126,7 +137,13 @@ const treeNodeProps: TreeNodeProps = ({ option }) => {
 	<div class="side" :collapse="sideCollapsed">
 		<div class="header" :sticky="headerSticky">
 			<span>{{ t('main.menu.connection') }}</span>
-			<NDropdown trigger="click" :options="newButtonOptions" size="small" placement="bottom-start">
+			<NDropdown
+				trigger="click"
+				:options="newButtonDropdownOptions"
+				size="small"
+				placement="bottom-start"
+				@select="handleNewButtonSelect"
+			>
 				<NButton size="tiny">
 					<Icon icon="tabler:plus" />
 				</NButton>
@@ -156,6 +173,7 @@ const treeNodeProps: TreeNodeProps = ({ option }) => {
 		<button class="side_collapse" :collapse="sideCollapsed" @click="sideCollapsed = !sideCollapsed">
 			<Icon height="18" width="18" icon="tabler:chevron-left" />
 		</button>
+		<NewConnectionDialog ref="newConnectionDialog" />
 	</div>
 </template>
 

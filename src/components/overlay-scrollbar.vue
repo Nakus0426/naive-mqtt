@@ -7,6 +7,9 @@ const { x = 'hidden', y = 'scroll' } = defineProps<{ x?: OverflowBehavior; y?: O
 const emit = defineEmits<{ sticky: ['top' | 'bottom', boolean] }>()
 
 const containerRef = useTemplateRef('container')
+const stickyTopRef = useTemplateRef('stickyTop')
+const stickyBottomRef = useTemplateRef('stickyBottom')
+
 const [init, instance] = useOverlayScrollbars({
 	options: {
 		scrollbars: { autoHide: 'leave', clickScroll: 'instant' },
@@ -21,9 +24,6 @@ const [init, instance] = useOverlayScrollbars({
 	defer: true,
 })
 onMounted(() => init({ target: containerRef.value, elements: { viewport: containerRef.value } }))
-
-const stickyTopRef = useTemplateRef('stickyTop')
-const stickyBottomRef = useTemplateRef('stickyBottom')
 </script>
 
 <template>

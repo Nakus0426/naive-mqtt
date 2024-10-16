@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { darkTheme, zhCN, dateZhCN } from 'naive-ui'
+import { darkTheme, zhCN, dateZhCN, enUS, dateEnUS } from 'naive-ui'
 import ProviderContent from './content.vue'
 import { customDarkThemeOverrides } from '@/assets/theme/dark'
 import { customLightThemeOverrides } from '@/assets/theme/light'
 import { useAppStore } from '@/store/modules/app'
+import { useI18n } from 'vue-i18n'
 
 const { globalStyle = true } = defineProps<{ globalStyle?: boolean }>()
 
@@ -11,6 +12,12 @@ const appStore = useAppStore()
 
 const theme = computed(() => (appStore.isDarkTheme ? darkTheme : null))
 const themeOverrides = computed(() => (appStore.isDarkTheme ? customDarkThemeOverrides : customLightThemeOverrides))
+
+const { locale } = useI18n()
+const localeMap = {
+	'zh-CN': { locale: zhCN, dateLocale: dateZhCN },
+	'en-US': { locale: enUS, dateLocale: dateEnUS },
+}
 </script>
 
 <template>
@@ -19,8 +26,8 @@ const themeOverrides = computed(() => (appStore.isDarkTheme ? customDarkThemeOve
 		inline-theme-disabled
 		:theme
 		:theme-overrides="themeOverrides"
-		:locale="zhCN"
-		:date-locale="dateZhCN"
+		:locale="localeMap[locale].locale"
+		:date-locale="localeMap[locale].dateLocale"
 	>
 		<NGlobalStyle v-if="globalStyle" />
 		<NLoadingBarProvider>

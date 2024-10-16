@@ -5,7 +5,13 @@
 		"delete": "Delete",
 		"edit": "Edit",
 		"copy": "Copy",
-		"duplicate": "Duplicate"
+		"duplicate": "Duplicate",
+		"generate": "Generate",
+		"seconds": "Seconds",
+		"milliseconds": "Milliseconds",
+		"qos_0": "At Most Once",
+		"qos_1": "At Least Once",
+		"qos_2": "Exactly Once"
 	},
 	"main": {
 		"menu": {
@@ -31,7 +37,60 @@
 		}
 	},
 	"connection": {
-		"newConnection": "New Connection",
-		"newGroup": "New Group"
+		"new_connection": "New Connection",
+		"new_group": "New Group",
+		"new_connectionDialog": {
+			"general": {
+				"title": "General",
+				"name": "Name",
+				"clientId": "Client ID",
+				"host": "Host",
+				"port": "Port",
+				"username": "Username",
+				"password": "Password",
+				"ssl": "SSL/TLS",
+				"ssl_secure": "SSL Secure",
+				"alpn": "ALPN",
+				"certificate": "Certificate",
+				"ca_server_signed": "CA signed server certificate",
+				"ca_self_signed": "CA or Self signed certificates",
+				"ca_file": "CA File",
+				"client_certificate_file": "Client Certificate File",
+				"client_key_file": "Client Key File",
+				"select_file": "Select File"
+			},
+			"advanced": {
+				"title": "Advanced",
+				"mqtt_version": "MQTT Version",
+				"connect_timeout": "Connect Timeout",
+				"keep_alive": "Keep Alive",
+				"reconnect_period": "Reconnect Period",
+				"clean_start": "Clean Start",
+				"session_expiry_interval": "Session Expiry Interval",
+				"clean_session": "Clean Session",
+				"receive_maximum": "Receive Maximum",
+				"maximum_packet_size": "Maximum Packet Size",
+				"topic_alias_maximum": "Topic Alias Maximum",
+				"request_response_info": "Request Response Info",
+				"request_problem_info": "Request Problem Info",
+				"user_properties": "User Properties",
+				"never_expire": "Never Expire",
+				"key": "Key",
+				"value": "Value"
+			},
+			"last_will_and_testament": {
+				"title": "Last Will and Testament",
+				"topic": "Topic",
+				"qos": "QoS",
+				"retain": "Retain",
+				"payload": "Payload",
+				"payload_format_indicator": "Payload Format Indicator",
+				"will_delay_interval": "Will Delay Interval",
+				"message_expiry_interval": "Message Expiry Interval",
+				"content_type": "Content Type",
+				"response_topic": "Response Topic",
+				"correlation_data": "Correlation Data"
+			}
+		}
 	}
 }
