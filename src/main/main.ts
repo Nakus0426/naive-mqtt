@@ -1,9 +1,9 @@
 import { app, BrowserWindow, ipcMain, nativeTheme, dialog } from 'electron'
-import { createWindow } from './create-window.ts'
-import { store } from './store.ts'
+import { createWindow } from './create-window'
+import { store } from './store'
 import { createRequire } from 'node:module'
-import { Main } from './interface.ts'
-import { Mqtt } from './mqtt.ts'
+import { Main } from './interface'
+import { Mqtt } from './mqtt'
 
 const require = createRequire(import.meta.url)
 

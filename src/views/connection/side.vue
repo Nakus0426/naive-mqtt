@@ -1,33 +1,30 @@
 <script setup lang="tsx">
 import { useI18n } from 'vue-i18n'
 import { type MessageSchema } from '@/configs/i18n'
-import { type DropdownOption, NPerformantEllipsis, NText } from 'naive-ui'
+import { type DropdownOption, type TreeDropInfo, NPerformantEllipsis, NText } from 'naive-ui'
 import { Icon } from '@iconify/vue'
 import {
 	type RenderPrefix,
 	type RenderLabel,
 	type TreeOverrideNodeClickBehavior,
 	type TreeNodeProps,
+	type RenderSwitcherIcon,
 } from 'naive-ui/lib/tree/src/interface'
-import { type OnUpdateValue } from 'naive-ui/es/select/src/interface'
+import { type OnUpdateValueImpl as OnSelectSelect } from 'naive-ui/es/select/src/interface'
+import { type OnUpdateValueImpl as OnDropdownSelect } from 'naive-ui/es/dropdown/src/interface'
 import NewConnectionDialog from './new-connection-dialog.vue'
+import NewGroupDialog from './new-group-dialog.vue'
+import { useConnectionsStore } from '@/store/modules/connections'
 
 const { t } = useI18n<{ message: MessageSchema }>()
+const connectionStore = useConnectionsStore()
 
 const sideCollapsed = ref(false)
 
-//#region 头部吸顶
-const headerSticky = ref(false)
-
-function handleHeaderStickyUpdate(direction: 'top' | 'bottom', value: boolean) {
-	if (direction !== 'top') return
-	headerSticky.value = value
-}
-//#endregion
-
 //#region 新建按钮
 const newConnectionDialogRef = useTemplateRef('newConnectionDialog')
-enum NewButtonDropdownOptionsKey {
+const newGroupDialogRef = useTemplateRef('newGroupDialog')
+enum NewButtonDropdownOptionsKeyEnum {
 	Connection = 'connection',
 	Group = 'group',
 }
@@ -35,45 +32,42 @@ const newButtonDropdownOptions: Array<DropdownOption> = [
 	{
 		label: () => t('connection.new_connection'),
 		icon: () => <Icon height="16" width="16" icon="tabler:layers-linked" />,
-		key: NewButtonDropdownOptionsKey.Connection,
+		key: NewButtonDropdownOptionsKeyEnum.Connection,
 	},
 	{
 		label: () => t('connection.new_group'),
 		icon: () => <Icon height="16" width="16" icon="tabler:folder" />,
-		key: NewButtonDropdownOptionsKey.Group,
+		key: NewButtonDropdownOptionsKeyEnum.Group,
 	},
 ]
 
-const handleNewButtonSelect: OnUpdateValue = key => {
-	if (key === NewButtonDropdownOptionsKey.Connection) newConnectionDialogRef.value.open()
+const handleNewButtonSelect: OnSelectSelect = key => {
+	if (key === NewButtonDropdownOptionsKeyEnum.Connection) newConnectionDialogRef.value.open()
+	else if (key === NewButtonDropdownOptionsKeyEnum.Group) newGroupDialogRef.value.open()
 }
 //#endregion
 
 //#region 连接树渲染
-const tree = [
-	{
-		key: '1',
-		label: 'group1',
-		isLeaf: false,
-		children: [{ key: '1-1', label: 'connection1', isLeaf: true }],
-	},
-	{ key: '2', label: 'group1', isLeaf: false, children: [] },
-	{ key: '3', label: 'connection1', isLeaf: true },
-]
-
 const treePrefixRender: RenderPrefix = ({ option }) => {
 	return (
 		<Icon
 			height="16"
 			width="16"
 			icon={option.isLeaf ? 'tabler:point-filled' : 'tabler:folder'}
-			color={option.isLeaf ? 'var(--text-color-2)' : 'var(--primary-color)'}
+			color={
+				option.isLeaf
+					? option.data?.['connected']
+						? 'var(--success-color)'
+						: 'var(--text-color-3)'
+					: 'var(--primary-color)'
+			}
 		/>
 	)
 }
 const treeLabelRender: RenderLabel = ({ option }) => (
 	<NPerformantEllipsis tooltip={{ width: 'trigger' }}>{option.label}</NPerformantEllipsis>
 )
+const treeSwitcherIconRender: RenderSwitcherIcon = () => <Icon icon="tabler:chevron-right" />
 const treeOverrideDefaultNodeClickBehavior: TreeOverrideNodeClickBehavior = ({ option }) => {
 	return option.isLeaf ? 'default' : 'toggleExpand'
 }
@@ -83,7 +77,7 @@ const treeOverrideDefaultNodeClickBehavior: TreeOverrideNodeClickBehavior = ({ o
 const treeDropdownPosition = ref({ x: null, y: null })
 const treeDropdownVisible = ref(false)
 const treeDropdownOptions = ref<Array<DropdownOption>>()
-enum TreeDropdownOptionsKey {
+enum TreeDropdownOptionsKeyEnum {
 	Rename = 'rename',
 	Delete = 'delete',
 	Edit = 'edit',
@@ -99,43 +93,82 @@ const treeNodeProps: TreeNodeProps = ({ option }) => {
 				? [
 						{
 							label: t('common.duplicate'),
-							key: TreeDropdownOptionsKey.Duplicate,
+							key: TreeDropdownOptionsKeyEnum.Duplicate,
 							icon: () => <Icon height="16" width="16" icon="tabler:copy" />,
+							clientId: option.key,
 						},
 						{
 							label: t('common.edit'),
-							key: TreeDropdownOptionsKey.Edit,
+							key: TreeDropdownOptionsKeyEnum.Edit,
 							icon: () => <Icon height="16" width="16" icon="tabler:edit" />,
+							clientId: option.key,
 						},
 						{ key: 'divider', type: 'divider' },
 						{
 							label: () => <NText type="error">{t('common.delete')}</NText>,
-							key: TreeDropdownOptionsKey.Delete,
+							key: TreeDropdownOptionsKeyEnum.Delete,
 							icon: () => <Icon height="16" width="16" color="var(--error-color)" icon="tabler:trash" />,
+							clientId: option.key,
 						},
 					]
 				: [
 						{
 							label: t('common.rename'),
-							key: TreeDropdownOptionsKey.Rename,
+							key: TreeDropdownOptionsKeyEnum.Rename,
 							icon: () => <Icon height="16" width="16" icon="tabler:edit" />,
+							groupId: option.key,
 						},
 						{ key: 'divider', type: 'divider' },
 						{
 							label: () => <NText type="error">{t('common.delete')}</NText>,
-							key: TreeDropdownOptionsKey.Delete,
+							key: TreeDropdownOptionsKeyEnum.Delete,
 							icon: () => <Icon height="16" width="16" color="var(--error-color)" icon="tabler:trash" />,
+							groupId: option.key,
 						},
 					]
 		},
 	}
 }
+
+const handleTreeDropdownSelect: OnDropdownSelect = (value, option) => {
+	const isGroup = option.data['isGroup']
+	if (value === TreeDropdownOptionsKeyEnum.Edit) newConnectionDialogRef.value.open(option.clientId as string)
+	if (value === TreeDropdownOptionsKeyEnum.Rename) newGroupDialogRef.value.open(option.groupId as string)
+	if (value === TreeDropdownOptionsKeyEnum.Duplicate) {
+		const connection = structuredClone(
+			toRaw(connectionStore.connections.find(item => item.clientId === option.clientId)),
+		)
+		connection.clientId = connectionStore.generateClientId()
+		connection.name = `${connection.name} (Copy)`
+		connectionStore.newConnection(connection)
+	}
+	if (value === TreeDropdownOptionsKeyEnum.Delete) {
+		const title = t('common.delete')
+		const content = () => (
+			<div style="padding: 20px 26px">
+				{t('common.delete_confirm', { name: t(`connection.${isGroup ? 'group' : 'connection'}`) })}
+			</div>
+		)
+		window.$dialog.warning({
+			title,
+			content,
+			positiveText: t('common.confirm'),
+			negativeText: t('common.cancel'),
+			onPositiveClick() {
+				connectionStore.deleteConnection(option.clientId as string)
+			},
+		})
+	}
+	treeDropdownVisible.value = false
+}
 //#endregion
+
+function handleTreeDrag({ node, dragNode, dropPosition }: TreeDropInfo) {}
 </script>
 
 <template>
 	<div class="side" :collapse="sideCollapsed">
-		<div class="header" :sticky="headerSticky">
+		<div class="header">
 			<span>{{ t('main.menu.connection') }}</span>
 			<NDropdown
 				trigger="click"
@@ -149,17 +182,23 @@ const treeNodeProps: TreeNodeProps = ({ option }) => {
 				</NButton>
 			</NDropdown>
 		</div>
-		<OverlayScrollbar class="body" @sticky="handleHeaderStickyUpdate">
+		<div class="body">
 			<NTree
-				:data="tree"
+				:data="connectionStore.connectionTree"
 				block-line
 				expand-on-click
+				key-field="clientId"
+				label-field="name"
 				:render-prefix="treePrefixRender"
 				:render-label="treeLabelRender"
+				:render-switcher-icon="treeSwitcherIconRender"
 				:override-default-node-click-behavior="treeOverrideDefaultNodeClickBehavior"
 				:node-props="treeNodeProps"
+				virtual-scroll
+				draggable
+				@drop="handleTreeDrag"
 			/>
-		</OverlayScrollbar>
+		</div>
 		<NDropdown
 			:options="treeDropdownOptions"
 			:show="treeDropdownVisible"
@@ -169,29 +208,30 @@ const treeNodeProps: TreeNodeProps = ({ option }) => {
 			size="small"
 			to=".main"
 			@clickoutside="treeDropdownVisible = false"
+			@select="handleTreeDropdownSelect"
 		/>
 		<button class="side_collapse" :collapse="sideCollapsed" @click="sideCollapsed = !sideCollapsed">
 			<Icon height="18" width="18" icon="tabler:chevron-left" />
 		</button>
 		<NewConnectionDialog ref="newConnectionDialog" />
+		<NewGroupDialog ref="newGroupDialog" />
 	</div>
 </template>
 
 <style scoped lang="scss">
 .side {
 	position: relative;
-	top: 0;
-	right: 0;
-	bottom: 0;
-	left: 0;
 	width: 300px;
+	max-width: 300px;
 	display: flex;
 	flex-direction: column;
+	gap: 8px;
 	border-right: 1px solid var(--border-color);
 	transition: all 0.2s var(--cubic-bezier-ease-in-out);
 
 	&[collapse='true'] {
-		transform: translateX(-100%);
+		transform: translateX(-17px);
+		max-width: 0;
 	}
 
 	&_collapse {
@@ -214,7 +254,7 @@ const treeNodeProps: TreeNodeProps = ({ option }) => {
 		z-index: 2;
 
 		&[collapse='true'] {
-			transform: translateX(110%);
+			transform: translateX(200%);
 
 			svg {
 				transform: rotate(180deg);
@@ -248,20 +288,28 @@ const treeNodeProps: TreeNodeProps = ({ option }) => {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	padding: 8px;
 	font-size: var(--font-size-large);
 	font-weight: bold;
 	border-bottom: 1px solid transparent;
 	transition: all 0.2s var(--cubic-bezier-ease-in-out);
-
-	&[sticky='true'] {
-		border-bottom-color: var(--border-color);
-	}
+	white-space: nowrap;
+	overflow: hidden;
+	padding: 8px 8px 0 8px;
 }
 
 .body {
 	flex: 1;
-	padding: 0px 8px;
+	overflow: hidden;
+
+	:deep(.n-tree) {
+		padding: 0px 8px;
+
+		&:has(.n-empty) {
+			display: flex;
+			flex: 1;
+			align-items: center;
+		}
+	}
 
 	:deep(.n-tree-node-switcher),
 	:deep(.n-tree-node-content) {

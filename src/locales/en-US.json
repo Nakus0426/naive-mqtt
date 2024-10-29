@@ -5,13 +5,23 @@
 		"delete": "Delete",
 		"edit": "Edit",
 		"copy": "Copy",
+		"confirm": "Confirm",
 		"duplicate": "Duplicate",
 		"generate": "Generate",
 		"seconds": "Seconds",
 		"milliseconds": "Milliseconds",
 		"qos_0": "At Most Once",
 		"qos_1": "At Least Once",
-		"qos_2": "Exactly Once"
+		"qos_2": "Exactly Once",
+		"input_required": "Please input {name}",
+		"save": "Save",
+		"cancel": "Cancel",
+		"delete_confirm": "Are you sure to delete this {name}?"
+	},
+	"editor": {
+		"line": "Ln",
+		"column": "Col",
+		"selected": "Selected"
 	},
 	"main": {
 		"menu": {
@@ -37,15 +47,22 @@
 		}
 	},
 	"connection": {
+		"connection": "Connection",
+		"group": "Group",
 		"new_connection": "New Connection",
 		"new_group": "New Group",
-		"new_connectionDialog": {
+		"edit_connection": "Edit Connection",
+		"edit_group": "Edit Group",
+		"new_connection_dialog": {
+			"save_and_connect": "Save and Connect",
+			"save_only": "Save Only",
 			"general": {
 				"title": "General",
 				"name": "Name",
 				"clientId": "Client ID",
 				"host": "Host",
 				"port": "Port",
+				"path": "Path",
 				"username": "Username",
 				"password": "Password",
 				"ssl": "SSL/TLS",
@@ -74,7 +91,6 @@
 				"request_response_info": "Request Response Info",
 				"request_problem_info": "Request Problem Info",
 				"user_properties": "User Properties",
-				"never_expire": "Never Expire",
 				"key": "Key",
 				"value": "Value"
 			},
@@ -91,6 +107,9 @@
 				"response_topic": "Response Topic",
 				"correlation_data": "Correlation Data"
 			}
+		},
+		"new_group_dialog": {
+			"name": "Name"
 		}
 	}
 }

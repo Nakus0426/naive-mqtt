@@ -1,10 +1,10 @@
 import { type BrowserWindow, ipcMain } from 'electron'
 import { type IClientOptions, type MqttClient, connect } from 'mqtt'
-import { Main } from './interface.ts'
-import { store } from './store.ts'
-import { response } from './utils.ts'
+import { Main } from './interface'
+import { store } from './store'
+import { response } from './utils'
 
-export type CreateClientOptions = IClientOptions & {}
+export type CreateClientOptions = IClientOptions & { will: { payload: string } }
 
 const clientPool = new Map<string, MqttClient>()
 

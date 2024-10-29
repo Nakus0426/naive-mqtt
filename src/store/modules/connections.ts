@@ -1,65 +1,101 @@
 import { defineStore } from 'pinia'
 import { getItem, setItem } from 'localforage'
-import { type CreateClientOptions } from '@/main/mqtt.ts'
+import { type CreateClientOptions } from '@/main/mqtt'
 import { TreeOption } from 'naive-ui'
+import { nanoid } from 'nanoid'
+import { last, orderBy } from 'es-toolkit'
+import { arrayToTree } from '@/main/utils'
 
-enum StoreKey {
-	GROUPS = 'groups',
-	CONNECTIONS = 'connections',
-}
-
-export type Group = { id: string; name: string }
+const CONNECTIONS_STORAGE_KEY = 'connections'
 
 export type Connection = {
 	name: string
-	groupId: Group['id']
+	parentClientId: string
+	connected?: boolean
+	order?: number
+	isGroup?: boolean
 } & Record<string, any> &
 	CreateClientOptions
 
 /**
  * 连接
  */
-export const useConnectionsStore = defineStore('CONNECTIONS', () => {
-	function getGroups() {
-		return getItem<Array<Group>>(StoreKey.GROUPS)
-	}
+export const useConnectionsStore = defineStore(
+	'CONNECTIONS',
+	() => {
+		const isImmediateConnect = ref(false)
 
-	function getConnections() {
-		return getItem<Array<Connection>>(StoreKey.CONNECTIONS)
-	}
+		const connections = ref<Array<Connection>>([])
+		const connectionTree = computed<Array<TreeOption>>(() => {
+			const _connections = orderBy(connections.value, ['order'], ['asc'])
+			return arrayToTree(_connections, {
+				idField: 'clientId',
+				parentField: 'groupId',
+				callback(node) {
+					node.isLeaf = !node.isGroup
+					node.data = node
+					return node
+				},
+			})
+		})
 
-	async function getConnectionsTree() {
-		const groups = await getGroups()
-		const connections = await getConnections()
-		const generateConnectionTree = (value: Array<Connection>) =>
-			value.map<TreeOption>(item => ({ label: item.name, key: item.clientId, isLeaf: true, data: item }))
-		return groups.length === 0
-			? generateConnectionTree(connections)
-			: groups.map<TreeOption>(({ id, name }) => ({
-					label: name,
-					key: id,
-					children: generateConnectionTree(connections.filter(({ groupId }) => groupId === id)),
-					isLeaf: false,
-				}))
-	}
+		async function init() {
+			connections.value = await getConnections()
+		}
 
-	async function newConnection(value: Connection) {
-		const connections = await getConnections()
-		connections.push(value)
-		await setItem(StoreKey.CONNECTIONS, connections)
-	}
+		async function getConnections() {
+			const res = await getItem<Array<Connection>>(CONNECTIONS_STORAGE_KEY)
+			return res || []
+		}
 
-	async function newGroup(value: Group) {
-		const groups = await getGroups()
-		groups.push(value)
-		await setItem(StoreKey.GROUPS, groups)
-	}
+		async function updateConnection(value: Connection) {
+			value = toRaw(value)
+			const index = connections.value.findIndex(({ clientId }) => clientId === value.clientId)
+			if (index === -1) return
+			connections.value.splice(index, 1, value)
+			await setItem(CONNECTIONS_STORAGE_KEY, toRaw(connections.value))
+		}
 
-	return {
-		getConnections,
-		getGroups,
-		getConnectionsTree,
-		newConnection,
-		newGroup,
-	}
-})
+		async function updateConnectionBatch(value: Array<Connection>) {
+			value = toRaw(value)
+			connections.value = value
+			await setItem(CONNECTIONS_STORAGE_KEY, toRaw(connections.value))
+		}
+
+		async function deleteConnection(value: Connection['clientId']) {
+			const index = connections.value.findIndex(item => item.clientId === value)
+			if (index === -1) return
+			connections.value.splice(index, 1)
+			await setItem(CONNECTIONS_STORAGE_KEY, toRaw(connections.value))
+		}
+
+		async function newConnection(value: Connection) {
+			value = toRaw(value)
+			value.order = last(connections.value)?.order + 1 || 0
+			connections.value.push(value)
+			await setItem(CONNECTIONS_STORAGE_KEY, toRaw(connections.value))
+		}
+
+		function generateClientId() {
+			return `naive_mqtt_${nanoid()}`
+		}
+
+		return {
+			isImmediateConnect,
+			connections,
+			connectionTree,
+			init,
+			getConnections,
+			updateConnection,
+			updateConnectionBatch,
+			deleteConnection,
+			newConnection,
+			generateClientId,
+		}
+	},
+	{
+		persist: {
+			pick: ['connections', 'connectionTree', 'isImmediateConnect'],
+		},
+	},
+)

@@ -1,23 +1,22 @@
 {
 	"compilerOptions": {
-		"module": "node16",
-		"moduleResolution": "node16",
-		"moduleDetection": "force",
-		"target": "ES2022",
-		"lib": ["DOM", "DOM.Iterable", "ES2022"],
+		"target": "ESNext",
+		"module": "CommonJS",
+		"moduleResolution": "Node",
+		"allowJs": true,
 		"resolveJsonModule": true,
+		"esModuleInterop": true,
 		"jsx": "preserve",
 		"allowImportingTsExtensions": true,
 		"noUnusedParameters": false,
 		"noUnusedLocals": false,
 		"noEmit": true,
 		"skipLibCheck": true,
+		"noImplicitAny": true,
 		"types": ["naive-ui/volar"],
 		"baseUrl": ".",
 		"paths": {
 			"@/*": ["src/*"]
 		}
-	},
-	"include": ["**/*.tsx", "**/*.ts", "**/*.vue", "**/*.d.ts", "src/main/preload.mts", "forge.config.cts"],
-	"exclude": ["node_modules", "**/*.js", "dist", ".vite"]
+	}
 }

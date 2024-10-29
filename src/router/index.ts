@@ -1,6 +1,6 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { App } from 'vue'
-import { RootRoute } from '@/router/routes.ts'
+import { RootRoute } from '@/router/routes'
 
 /** 创建router */
 export const router = createRouter({

@@ -2,5 +2,6 @@
   "cSpell.words": [
     "alpn",
     "maximizable"
-  ]
+  ],
+  "typescript.tsdk": "node_modules\\typescript\\lib"
 }

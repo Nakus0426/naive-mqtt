@@ -5,13 +5,23 @@
 		"delete": "删除",
 		"edit": "编辑",
 		"copy": "复制",
+		"confirm": "确认",
 		"duplicate": "复制",
 		"generate": "生成",
 		"seconds": "秒",
 		"milliseconds": "毫秒",
 		"qos_0": "最多一次",
 		"qos_1": "至少一次",
-		"qos_2": "仅一次"
+		"qos_2": "仅一次",
+		"input_required": "请输入{name}",
+		"save": "保存",
+		"cancel": "取消",
+		"delete_confirm": "确认删除此{name}？"
+	},
+	"editor": {
+		"line": "行",
+		"column": "列",
+		"selected": "已选择"
 	},
 	"main": {
 		"menu": {
@@ -37,15 +47,22 @@
 		}
 	},
 	"connection": {
+		"connection": "连接",
+		"group": "分组",
 		"new_connection": "新建连接",
 		"new_group": "新建分组",
-		"new_connectionDialog": {
+		"edit_connection": "编辑连接",
+		"edit_group": "编辑分组",
+		"new_connection_dialog": {
+			"save_and_connect": "保存并连接",
+			"save_only": "仅保存",
 			"general": {
 				"title": "通用",
 				"name": "名称",
 				"clientId": "客户端 ID",
 				"host": "服务器地址",
 				"port": "端口",
+				"path": "路径",
 				"username": "用户名",
 				"password": "密码",
 				"ssl": "SSL/TLS",
@@ -74,7 +91,6 @@
 				"request_response_info": "请求响应信息",
 				"request_problem_info": "请求失败信息",
 				"user_properties": "用户属性",
-				"never_expire": "永不过期",
 				"key": "键",
 				"value": "值"
 			},
@@ -91,6 +107,9 @@
 				"response_topic": "响应主题",
 				"correlation_data": "对比数据"
 			}
+		},
+		"new_group_dialog": {
+			"name": "名称"
 		}
 	}
 }

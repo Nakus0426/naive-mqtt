@@ -184,6 +184,18 @@
 	.n-button {
 		line-height: normal;
 	}
+
+	// Monaco Editor
+	.monaco-scrollable-element > .scrollbar > .slider {
+		border-radius: 2px;
+		background: var(--scrollbar-color);
+		transition: background 0.2s var(--cubic-bezier-ease-in-out);
+		cursor: pointer;
+
+		&:hover {
+			background: var(--scrollbar-color-hover);
+		}
+	}
 }
 
 // 深色主题

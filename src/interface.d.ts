@@ -1,6 +1,6 @@
 import { type NativeTheme, type OpenDialogOptions, type OpenDialogReturnValue } from 'electron'
-import { type CreateClientOptions } from './main/mqtt.ts'
-import { type Response } from './main/utils.ts'
+import { type CreateClientOptions } from './main/mqtt'
+import { type Response } from './main/utils'
 
 export interface ElectronAPI {
 	updateTheme: (theme: NativeTheme['themeSource']) => void

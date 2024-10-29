@@ -1,8 +1,8 @@
-@import 'reset.scss';
-@import 'var.scss';
-@import 'common.scss';
-@import 'component.scss';
-@import 'font.scss';
+@use 'reset.scss';
+@use 'var.scss';
+@use 'common.scss';
+@use 'component.scss';
+@use 'font.scss';
 
 :root,
 :root[color-scheme='light'] {

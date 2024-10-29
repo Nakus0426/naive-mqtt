@@ -5,7 +5,7 @@ import Side from './side.vue'
 <template>
 	<div class="connection">
 		<Side />
-		<div class="content"></div>
+		<div class="content">123</div>
 	</div>
 </template>
 

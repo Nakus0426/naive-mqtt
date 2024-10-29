@@ -5,7 +5,7 @@ import Components from 'unplugin-vue-components/vite'
 import AutoImport from 'unplugin-auto-import/vite'
 import { NaiveUiResolver } from 'unplugin-vue-components/resolvers'
 import type { ComponentResolver } from 'unplugin-vue-components/types'
-import { pluginExposeRenderer } from './vite.base.config.ts'
+import { pluginExposeRenderer } from './vite.base.config'
 
 export default defineConfig(env => {
 	const forgeEnv = env as ConfigEnv<'renderer'>
@@ -25,6 +25,13 @@ export default defineConfig(env => {
 		resolve: {
 			alias: [{ find: '@', replacement: '/src' }],
 			preserveSymlinks: true,
+		},
+		css: {
+			preprocessorOptions: {
+				scss: {
+					api: 'modern-compiler',
+				},
+			},
 		},
 		plugins: [
 			Vue(),

@@ -1,5 +1,5 @@
 import { defineConfig, mergeConfig, type ConfigEnv, type UserConfig } from 'vite'
-import { getBuildConfig, getBuildDefine, external, esModule } from './vite.base.config.ts'
+import { getBuildConfig, getBuildDefine, external, esModule, pluginHotRestart } from './vite.base.config'
 
 export default defineConfig(env => {
 	const forgeEnv = env as ConfigEnv<'build'>
@@ -9,11 +9,10 @@ export default defineConfig(env => {
 		build: {
 			lib: {
 				entry: forgeConfigSelf.entry!,
-				fileName: () => '[name].js',
+				fileName: () => '[name].mjs',
 				formats: [esModule ? 'es' : 'cjs'],
 			},
 			rollupOptions: {
-				watch: false,
 				external,
 			},
 		},
@@ -21,7 +20,7 @@ export default defineConfig(env => {
 		resolve: {
 			mainFields: ['module', 'jsnext:main', 'jsnext'],
 		},
+		plugins: [pluginHotRestart('restart')],
 	}
-	console.log(mergeConfig(getBuildConfig(forgeEnv), config))
 	return mergeConfig(getBuildConfig(forgeEnv), config)
 })

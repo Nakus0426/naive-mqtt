@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import { Main } from './interface.ts'
-import { ElectronAPI } from '@/interface.js'
+import { Main } from './interface'
+import { ElectronAPI } from '@/interface'
 
 contextBridge.exposeInMainWorld('electronAPI', {
 	updateTheme: (...args) => ipcRenderer.send(Main.UpdateTheme, ...args),

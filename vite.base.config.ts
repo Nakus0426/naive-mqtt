@@ -20,6 +20,7 @@ export function getBuildConfig(env: ConfigEnv<'build'>): UserConfig {
 		mode,
 		build: {
 			emptyOutDir: false,
+			watch: command === 'serve' ? {} : null,
 			outDir: '.vite/build',
 			minify: command === 'build',
 		},
@@ -72,6 +73,21 @@ export function pluginExposeRenderer(name: string): Plugin {
 				const addressInfo = server.httpServer!.address() as AddressInfo
 				process.env[VITE_DEV_SERVER_URL] = `http://localhost:${addressInfo?.port}`
 			})
+		},
+	}
+}
+
+export function pluginHotRestart(command: 'reload' | 'restart'): Plugin {
+	return {
+		name: '@electron-forge/plugin-vite:hot-restart',
+		closeBundle() {
+			if (command === 'reload') {
+				for (const server of Object.values(process.viteDevServers)) {
+					server.ws.send({ type: 'full-reload' })
+				}
+			} else {
+				process.stdin.emit('data', 'rs')
+			}
 		},
 	}
 }
