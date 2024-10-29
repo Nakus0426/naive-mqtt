@@ -1,7 +1,7 @@
 <script setup lang="tsx">
 import { useI18n } from 'vue-i18n'
 import { type MessageSchema } from '@/configs/i18n'
-import { type DropdownOption, type TreeDropInfo, NPerformantEllipsis, NText } from 'naive-ui'
+import { type DropdownOption, type TreeDropInfo, NPerformantEllipsis, NText, TreeOption } from 'naive-ui'
 import { Icon } from '@iconify/vue'
 import {
 	type RenderPrefix,
@@ -48,6 +48,23 @@ const handleNewButtonSelect: OnSelectSelect = key => {
 //#endregion
 
 //#region 连接树渲染
+const tree = computed<Array<TreeOption>>(() => {
+	const res = []
+	const queue = connectionStore.connectionTree.map(node => ({
+		node,
+		newNode: { key: node.clientId, label: node.name, isLeaf: !node.isGroup, data: node, children: [] },
+	}))
+	while (queue.length > 0) {
+		const { node, newNode } = queue.shift()
+		res.push(newNode)
+		node.children.forEach(child => {
+			const childNode = { key: child.clientId, label: child.name, isLeaf: !child.isGroup, data: child, children: [] }
+			newNode.children.push(child)
+			queue.push({ node: child, newNode: childNode })
+		})
+	}
+	return res
+})
 const treePrefixRender: RenderPrefix = ({ option }) => {
 	return (
 		<Icon
@@ -95,20 +112,20 @@ const treeNodeProps: TreeNodeProps = ({ option }) => {
 							label: t('common.duplicate'),
 							key: TreeDropdownOptionsKeyEnum.Duplicate,
 							icon: () => <Icon height="16" width="16" icon="tabler:copy" />,
-							clientId: option.key,
+							data: option.data,
 						},
 						{
 							label: t('common.edit'),
 							key: TreeDropdownOptionsKeyEnum.Edit,
 							icon: () => <Icon height="16" width="16" icon="tabler:edit" />,
-							clientId: option.key,
+							data: option.data,
 						},
 						{ key: 'divider', type: 'divider' },
 						{
 							label: () => <NText type="error">{t('common.delete')}</NText>,
 							key: TreeDropdownOptionsKeyEnum.Delete,
 							icon: () => <Icon height="16" width="16" color="var(--error-color)" icon="tabler:trash" />,
-							clientId: option.key,
+							data: option.data,
 						},
 					]
 				: [
@@ -116,14 +133,14 @@ const treeNodeProps: TreeNodeProps = ({ option }) => {
 							label: t('common.rename'),
 							key: TreeDropdownOptionsKeyEnum.Rename,
 							icon: () => <Icon height="16" width="16" icon="tabler:edit" />,
-							groupId: option.key,
+							data: option.data,
 						},
 						{ key: 'divider', type: 'divider' },
 						{
 							label: () => <NText type="error">{t('common.delete')}</NText>,
 							key: TreeDropdownOptionsKeyEnum.Delete,
 							icon: () => <Icon height="16" width="16" color="var(--error-color)" icon="tabler:trash" />,
-							groupId: option.key,
+							data: option.data,
 						},
 					]
 		},
@@ -132,12 +149,11 @@ const treeNodeProps: TreeNodeProps = ({ option }) => {
 
 const handleTreeDropdownSelect: OnDropdownSelect = (value, option) => {
 	const isGroup = option.data['isGroup']
-	if (value === TreeDropdownOptionsKeyEnum.Edit) newConnectionDialogRef.value.open(option.clientId as string)
-	if (value === TreeDropdownOptionsKeyEnum.Rename) newGroupDialogRef.value.open(option.groupId as string)
+	const clientId = option.data['clientId']
+	if (value === TreeDropdownOptionsKeyEnum.Edit) newConnectionDialogRef.value.open(clientId)
+	if (value === TreeDropdownOptionsKeyEnum.Rename) newGroupDialogRef.value.open(clientId)
 	if (value === TreeDropdownOptionsKeyEnum.Duplicate) {
-		const connection = structuredClone(
-			toRaw(connectionStore.connections.find(item => item.clientId === option.clientId)),
-		)
+		const connection = structuredClone(connectionStore.getConnection(clientId))
 		connection.clientId = connectionStore.generateClientId()
 		connection.name = `${connection.name} (Copy)`
 		connectionStore.newConnection(connection)
@@ -155,7 +171,7 @@ const handleTreeDropdownSelect: OnDropdownSelect = (value, option) => {
 			positiveText: t('common.confirm'),
 			negativeText: t('common.cancel'),
 			onPositiveClick() {
-				connectionStore.deleteConnection(option.clientId as string)
+				connectionStore.deleteConnection(clientId as string)
 			},
 		})
 	}
@@ -163,7 +179,16 @@ const handleTreeDropdownSelect: OnDropdownSelect = (value, option) => {
 }
 //#endregion
 
-function handleTreeDrag({ node, dragNode, dropPosition }: TreeDropInfo) {}
+function handleTreeDrag({ node, dragNode, dropPosition }: TreeDropInfo) {
+	console.log({ node, dragNode, dropPosition })
+	if (dropPosition === 'inside') {
+		if (!dragNode.isLeaf || node.isLeaf) return
+	}
+	if (dropPosition === 'before') {
+	}
+	if (dropPosition === 'after') {
+	}
+}
 </script>
 
 <template>
@@ -184,11 +209,9 @@ function handleTreeDrag({ node, dragNode, dropPosition }: TreeDropInfo) {}
 		</div>
 		<div class="body">
 			<NTree
-				:data="connectionStore.connectionTree"
+				:data="tree"
 				block-line
 				expand-on-click
-				key-field="clientId"
-				label-field="name"
 				:render-prefix="treePrefixRender"
 				:render-label="treeLabelRender"
 				:render-switcher-icon="treeSwitcherIconRender"

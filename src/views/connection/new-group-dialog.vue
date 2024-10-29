@@ -14,11 +14,11 @@ const connectionsStore = useConnectionsStore()
 const visible = ref(false)
 const edit = ref(false)
 
-function open(groupId?: Connection['clientId']) {
+function open(clientId?: Connection['clientId']) {
 	visible.value = true
-	if (groupId) {
+	if (clientId) {
 		edit.value = true
-		data.value = toRaw(connectionsStore.connections.find(item => item.id === groupId))
+		data.value = toRaw(connectionsStore.getConnection(clientId))
 	}
 }
 
@@ -38,6 +38,7 @@ const defaultData: Connection = {
 	parentClientId: null,
 	isGroup: true,
 	will: null,
+	children: [],
 }
 const data = ref(structuredClone(defaultData))
 //#endregion

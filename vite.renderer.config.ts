@@ -4,6 +4,7 @@ import VueJsx from '@vitejs/plugin-vue-jsx'
 import Components from 'unplugin-vue-components/vite'
 import AutoImport from 'unplugin-auto-import/vite'
 import { NaiveUiResolver } from 'unplugin-vue-components/resolvers'
+import VueDevtools from 'vite-plugin-vue-devtools'
 import type { ComponentResolver } from 'unplugin-vue-components/types'
 import { pluginExposeRenderer } from './vite.base.config'
 
@@ -54,6 +55,7 @@ export default defineConfig(env => {
 				],
 				vueTemplate: true,
 			}),
+			VueDevtools(),
 			pluginExposeRenderer(name),
 		],
 	}

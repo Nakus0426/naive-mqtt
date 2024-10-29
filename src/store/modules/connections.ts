@@ -3,8 +3,6 @@ import { getItem, setItem } from 'localforage'
 import { type CreateClientOptions } from '@/main/mqtt'
 import { TreeOption } from 'naive-ui'
 import { nanoid } from 'nanoid'
-import { last, orderBy } from 'es-toolkit'
-import { arrayToTree } from '@/main/utils'
 
 const CONNECTIONS_STORAGE_KEY = 'connections'
 
@@ -12,8 +10,8 @@ export type Connection = {
 	name: string
 	parentClientId: string
 	connected?: boolean
-	order?: number
 	isGroup?: boolean
+	children?: Array<Connection>
 } & Record<string, any> &
 	CreateClientOptions
 
@@ -25,22 +23,10 @@ export const useConnectionsStore = defineStore(
 	() => {
 		const isImmediateConnect = ref(false)
 
-		const connections = ref<Array<Connection>>([])
-		const connectionTree = computed<Array<TreeOption>>(() => {
-			const _connections = orderBy(connections.value, ['order'], ['asc'])
-			return arrayToTree(_connections, {
-				idField: 'clientId',
-				parentField: 'groupId',
-				callback(node) {
-					node.isLeaf = !node.isGroup
-					node.data = node
-					return node
-				},
-			})
-		})
+		const connectionTree = ref<Array<Connection>>([])
 
 		async function init() {
-			connections.value = await getConnections()
+			connectionTree.value = await getConnections()
 		}
 
 		async function getConnections() {
@@ -48,32 +34,54 @@ export const useConnectionsStore = defineStore(
 			return res || []
 		}
 
-		async function updateConnection(value: Connection) {
-			value = toRaw(value)
-			const index = connections.value.findIndex(({ clientId }) => clientId === value.clientId)
-			if (index === -1) return
-			connections.value.splice(index, 1, value)
-			await setItem(CONNECTIONS_STORAGE_KEY, toRaw(connections.value))
+		async function newConnection(connection: Connection) {
+			if (connection.parentClientId)
+				for (const item of connectionTree.value) {
+					if (item.clientId === connection.parentClientId) {
+						item.children = [connection]
+						break
+					}
+				}
+			else connectionTree.value.push(connection)
+			await setItem(CONNECTIONS_STORAGE_KEY, toRaw(connectionTree.value))
 		}
 
-		async function updateConnectionBatch(value: Array<Connection>) {
-			value = toRaw(value)
-			connections.value = value
-			await setItem(CONNECTIONS_STORAGE_KEY, toRaw(connections.value))
+		async function deleteConnection(clientId: Connection['clientId']) {
+			const queue = connectionTree.value.slice()
+			while (queue.length > 0) {
+				const currentNode = queue.shift()
+				for (let i = currentNode.children.length - 1; i >= 0; i--) {
+					const childNode = currentNode.children[i]
+					if (childNode.clientId === clientId) {
+						currentNode.children.splice(i, 1)
+						queue.push(childNode)
+					}
+				}
+				if (currentNode.clientId === clientId && connectionTree.value.some(item => item.clientId === clientId)) {
+					const index = connectionTree.value.findIndex(item => item.clientId === clientId)
+					connectionTree.value.splice(index, 1)
+				}
+			}
+			await setItem(CONNECTIONS_STORAGE_KEY, toRaw(connectionTree.value))
 		}
 
-		async function deleteConnection(value: Connection['clientId']) {
-			const index = connections.value.findIndex(item => item.clientId === value)
-			if (index === -1) return
-			connections.value.splice(index, 1)
-			await setItem(CONNECTIONS_STORAGE_KEY, toRaw(connections.value))
+		async function updateConnection(connection: Connection) {
+			const queue = connectionTree.value.slice()
+			while (queue.length > 0) {
+				let currentNode = queue.shift()
+				if (currentNode.clientId === connection.clientId) currentNode = connection
+				currentNode.children.forEach(item => queue.push(item))
+			}
+			await setItem(CONNECTIONS_STORAGE_KEY, toRaw(connectionTree.value))
 		}
 
-		async function newConnection(value: Connection) {
-			value = toRaw(value)
-			value.order = last(connections.value)?.order + 1 || 0
-			connections.value.push(value)
-			await setItem(CONNECTIONS_STORAGE_KEY, toRaw(connections.value))
+		function getConnection(clientId: Connection['clientId']) {
+			const queue = connectionTree.value.slice()
+			while (queue.length > 0) {
+				let currentNode = queue.shift()
+				if (currentNode.clientId === clientId) return toRaw(currentNode)
+				currentNode.children.forEach(item => queue.push(item))
+			}
 		}
 
 		function generateClientId() {
@@ -82,20 +90,19 @@ export const useConnectionsStore = defineStore(
 
 		return {
 			isImmediateConnect,
-			connections,
 			connectionTree,
 			init,
 			getConnections,
-			updateConnection,
-			updateConnectionBatch,
-			deleteConnection,
 			newConnection,
+			deleteConnection,
+			updateConnection,
+			getConnection,
 			generateClientId,
 		}
 	},
 	{
 		persist: {
-			pick: ['connections', 'connectionTree', 'isImmediateConnect'],
+			pick: ['connectionTree', 'isImmediateConnect'],
 		},
 	},
 )

@@ -18,7 +18,7 @@ const edit = ref(false)
 function open(clientId?: Connection['clientId']) {
 	if (clientId) {
 		edit.value = true
-		data.value = toRaw(connectionStore.connections.find(item => item.clientId === clientId))
+		data.value = toRaw(connectionStore.getConnection(clientId))
 	}
 	visible.value = true
 }
@@ -133,6 +133,7 @@ const defaultData: Connection = {
 	name: null,
 	parentClientId: null,
 	isGroup: false,
+	children: [],
 	clientId: null,
 	protocol: 'mqtt',
 	hostname: null,
