@@ -14,7 +14,7 @@ import { type OnUpdateValueImpl as OnSelectSelect } from 'naive-ui/es/select/src
 import { type OnUpdateValueImpl as OnDropdownSelect } from 'naive-ui/es/dropdown/src/interface'
 import NewConnectionDialog from './new-connection-dialog.vue'
 import NewGroupDialog from './new-group-dialog.vue'
-import { useConnectionsStore } from '@/store/modules/connections'
+import { type Connection, useConnectionsStore } from '@/store/modules/connections'
 
 const { t } = useI18n<{ message: MessageSchema }>()
 const connectionStore = useConnectionsStore()
@@ -49,21 +49,19 @@ const handleNewButtonSelect: OnSelectSelect = key => {
 
 //#region 连接树渲染
 const tree = computed<Array<TreeOption>>(() => {
-	const res = []
-	const queue = connectionStore.connectionTree.map(node => ({
-		node,
-		newNode: { key: node.clientId, label: node.name, isLeaf: !node.isGroup, data: node, children: [] },
+	return connectionStore.connectionTree.map(node => ({
+		key: node.clientId,
+		label: node.name,
+		isLeaf: !node.isGroup,
+		children: node.children.map(child => ({
+			key: child.clientId,
+			label: child.name,
+			isLeaf: !child.isGroup,
+			children: [],
+			data: child,
+		})),
+		data: node,
 	}))
-	while (queue.length > 0) {
-		const { node, newNode } = queue.shift()
-		res.push(newNode)
-		node.children.forEach(child => {
-			const childNode = { key: child.clientId, label: child.name, isLeaf: !child.isGroup, data: child, children: [] }
-			newNode.children.push(child)
-			queue.push({ node: child, newNode: childNode })
-		})
-	}
-	return res
 })
 const treePrefixRender: RenderPrefix = ({ option }) => {
 	return (
@@ -179,16 +177,53 @@ const handleTreeDropdownSelect: OnDropdownSelect = (value, option) => {
 }
 //#endregion
 
-function handleTreeDrag({ node, dragNode, dropPosition }: TreeDropInfo) {
-	console.log({ node, dragNode, dropPosition })
-	if (dropPosition === 'inside') {
-		if (!dragNode.isLeaf || node.isLeaf) return
+//#region 连接树拖拽
+function handleTreeDrag({ node: _node, dragNode: _dragNode, dropPosition }: TreeDropInfo) {
+	const dragNode = connectionStore.getConnection(_dragNode.key as string)
+	const node = connectionStore.getConnection(_node.key as string)
+	const [dragNodeSiblings, dragNodeIndex] = findSiblings(dragNode.clientId, connectionStore.connectionTree)
+	if (!dragNodeSiblings || dragNodeIndex === null || (dropPosition === 'inside' && (!node.isGroup || dragNode.isGroup)))
+		return
+	dragNodeSiblings.splice(dragNodeIndex, 1)
+	switch (dropPosition) {
+		case 'inside':
+			dragNode.parentClientId = node.clientId
+			node.children = node.children ? [dragNode, ...node.children] : [dragNode]
+			break
+		case 'before':
+		case 'after':
+			const [nodeSiblings, nodeIndex] = findSiblings(node.clientId, connectionStore.connectionTree)
+			if (!nodeSiblings || nodeIndex === null) return
+			dropPosition === 'before'
+				? nodeSiblings.splice(nodeIndex, 0, dragNode)
+				: nodeSiblings.splice(nodeIndex + 1, 0, dragNode)
+			break
 	}
-	if (dropPosition === 'before') {
-	}
-	if (dropPosition === 'after') {
-	}
+	connectionStore.connectionTree.forEach(node => {
+		if (node.parentClientId) {
+			const isExist = connectionStore
+				.getConnection(node.parentClientId)
+				.children.some(child => child.clientId === node.clientId)
+			if (!isExist) node.parentClientId = null
+		}
+	})
+	connectionStore.updateConnectionTree(connectionStore.connectionTree)
 }
+
+function findSiblings(
+	clientId: Connection['clientId'],
+	tree?: Array<Connection>,
+): [Array<Connection>, number] | [null, null] {
+	if (!tree) return [null, null]
+	const index = tree.findIndex(node => node.clientId === clientId)
+	if (index !== -1) return [tree, index]
+	for (const node of tree) {
+		const [siblings, siblingIndex] = findSiblings(clientId, node.children)
+		if (siblings) return [siblings, siblingIndex]
+	}
+	return [null, null]
+}
+//#endregion
 </script>
 
 <template>

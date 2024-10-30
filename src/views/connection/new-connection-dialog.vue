@@ -18,7 +18,7 @@ const edit = ref(false)
 function open(clientId?: Connection['clientId']) {
 	if (clientId) {
 		edit.value = true
-		data.value = toRaw(connectionStore.getConnection(clientId))
+		data.value = structuredClone(toRaw(connectionStore.getConnection(clientId)))
 	}
 	visible.value = true
 }
@@ -185,10 +185,7 @@ const templateList = ref<Array<Connection>>([])
 const nameAutoCompleteOptions = computed<Array<AutoCompleteOption>>(() =>
 	templateList.value.map(({ name, clientId }) => ({ label: name, key: clientId })),
 )
-onBeforeMount(async () => {
-	const storeConnections = await connectionStore.getConnections()
-	templateList.value = storeConnections || []
-})
+onBeforeMount(async () => {})
 //#endregion
 
 //#region 保存

@@ -18,7 +18,7 @@ function open(clientId?: Connection['clientId']) {
 	visible.value = true
 	if (clientId) {
 		edit.value = true
-		data.value = toRaw(connectionsStore.getConnection(clientId))
+		data.value = structuredClone(toRaw(connectionsStore.getConnection(clientId)))
 	}
 }
 

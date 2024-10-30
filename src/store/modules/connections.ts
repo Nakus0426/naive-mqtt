@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia'
 import { getItem, setItem } from 'localforage'
 import { type CreateClientOptions } from '@/main/mqtt'
-import { TreeOption } from 'naive-ui'
 import { nanoid } from 'nanoid'
 
 const CONNECTIONS_STORAGE_KEY = 'connections'
@@ -22,14 +21,13 @@ export const useConnectionsStore = defineStore(
 	'CONNECTIONS',
 	() => {
 		const isImmediateConnect = ref(false)
-
 		const connectionTree = ref<Array<Connection>>([])
 
 		async function init() {
-			connectionTree.value = await getConnections()
+			connectionTree.value = await getConnectionTree()
 		}
 
-		async function getConnections() {
+		async function getConnectionTree() {
 			const res = await getItem<Array<Connection>>(CONNECTIONS_STORAGE_KEY)
 			return res || []
 		}
@@ -38,7 +36,8 @@ export const useConnectionsStore = defineStore(
 			if (connection.parentClientId)
 				for (const item of connectionTree.value) {
 					if (item.clientId === connection.parentClientId) {
-						item.children = [connection]
+						if (item.children) item.children.push(connection)
+						else item.children = [connection]
 						break
 					}
 				}
@@ -66,22 +65,34 @@ export const useConnectionsStore = defineStore(
 		}
 
 		async function updateConnection(connection: Connection) {
-			const queue = connectionTree.value.slice()
-			while (queue.length > 0) {
-				let currentNode = queue.shift()
-				if (currentNode.clientId === connection.clientId) currentNode = connection
-				currentNode.children.forEach(item => queue.push(item))
+			const findSiblings = (clientId: Connection['clientId'], tree: Array<Connection>) => {
+				if (!tree) return [null, null]
+				const index = tree.findIndex(node => node.clientId === clientId)
+				if (index !== -1) return [tree, index]
+				for (const node of tree) {
+					const [siblings, siblingIndex] = findSiblings(clientId, node.children)
+					if (siblings) return [siblings, siblingIndex]
+				}
+				return [null, null]
 			}
+			const [siblings, siblingIndex] = findSiblings(connection.clientId, connectionTree.value)
+			if (!siblings || siblingIndex === null) return
+			siblings[siblingIndex] = connection
 			await setItem(CONNECTIONS_STORAGE_KEY, toRaw(connectionTree.value))
 		}
 
 		function getConnection(clientId: Connection['clientId']) {
-			const queue = connectionTree.value.slice()
+			const queue = toRaw(connectionTree.value).slice()
 			while (queue.length > 0) {
 				let currentNode = queue.shift()
-				if (currentNode.clientId === clientId) return toRaw(currentNode)
+				if (currentNode.clientId === clientId) return currentNode
 				currentNode.children.forEach(item => queue.push(item))
 			}
+		}
+
+		async function updateConnectionTree(tree: Array<Connection>) {
+			connectionTree.value = tree
+			await setItem(CONNECTIONS_STORAGE_KEY, toRaw(connectionTree.value))
 		}
 
 		function generateClientId() {
@@ -92,11 +103,12 @@ export const useConnectionsStore = defineStore(
 			isImmediateConnect,
 			connectionTree,
 			init,
-			getConnections,
+			getConnectionTree,
 			newConnection,
 			deleteConnection,
 			updateConnection,
 			getConnection,
+			updateConnectionTree,
 			generateClientId,
 		}
 	},
