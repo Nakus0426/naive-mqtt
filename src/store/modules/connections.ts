@@ -21,6 +21,9 @@ export const useConnectionsStore = defineStore(
 	'CONNECTIONS',
 	() => {
 		const isImmediateConnect = ref(false)
+
+		const sideWidth = ref(300)
+
 		const connectionTree = ref<Array<Connection>>([])
 
 		async function init() {
@@ -101,6 +104,7 @@ export const useConnectionsStore = defineStore(
 
 		return {
 			isImmediateConnect,
+			sideWidth,
 			connectionTree,
 			init,
 			getConnectionTree,
@@ -114,7 +118,7 @@ export const useConnectionsStore = defineStore(
 	},
 	{
 		persist: {
-			pick: ['connectionTree', 'isImmediateConnect'],
+			pick: ['sideWidth', 'connectionTree', 'isImmediateConnect'],
 		},
 	},
 )

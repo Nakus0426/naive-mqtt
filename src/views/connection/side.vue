@@ -19,7 +19,30 @@ import { type Connection, useConnectionsStore } from '@/store/modules/connection
 const { t } = useI18n<{ message: MessageSchema }>()
 const connectionStore = useConnectionsStore()
 
+//#region 宽度
 const sideCollapsed = ref(false)
+const sideWidth = computed(() => `${connectionStore.sideWidth}px`)
+const sideResizing = ref(false)
+
+function handleSideDrag({ clientX }: MouseEvent) {
+	sideResizing.value = true
+	const startX = clientX
+	const initialWidth = connectionStore.sideWidth
+	const onMouseMove = ({ clientX: _clientX }: MouseEvent) => {
+		if (!sideResizing) return
+
+		const diffX = _clientX - startX
+		connectionStore.sideWidth = Math.max(200, initialWidth + diffX)
+	}
+	const endResize = () => {
+		sideResizing.value = false
+		document.removeEventListener('mousemove', onMouseMove)
+		document.removeEventListener('mouseup', endResize)
+	}
+	document.addEventListener('mousemove', onMouseMove)
+	document.addEventListener('mouseup', endResize)
+}
+//#endregion
 
 //#region 新建按钮
 const newConnectionDialogRef = useTemplateRef('newConnectionDialog')
@@ -227,7 +250,7 @@ function findSiblings(
 </script>
 
 <template>
-	<div class="side" :collapse="sideCollapsed">
+	<div class="side" :collapse="sideCollapsed" :resizing="sideResizing">
 		<div class="header">
 			<span>{{ t('main.menu.connection') }}</span>
 			<NDropdown
@@ -273,14 +296,15 @@ function findSiblings(
 		</button>
 		<NewConnectionDialog ref="newConnectionDialog" />
 		<NewGroupDialog ref="newGroupDialog" />
+		<div class="drag" @mousedown="handleSideDrag" />
 	</div>
 </template>
 
 <style scoped lang="scss">
 .side {
 	position: relative;
-	width: 300px;
-	max-width: 300px;
+	width: v-bind(sideWidth);
+	max-width: v-bind(sideWidth);
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
@@ -290,6 +314,10 @@ function findSiblings(
 	&[collapse='true'] {
 		transform: translateX(-17px);
 		max-width: 0;
+	}
+
+	&[resizing='true'] {
+		transition: none;
 	}
 
 	&_collapse {
@@ -377,6 +405,20 @@ function findSiblings(
 
 	:deep(.n-tree-node-content__text) {
 		overflow: hidden;
+	}
+}
+
+.drag {
+	position: absolute;
+	right: -2px;
+	top: 0;
+	bottom: 0;
+	width: 4px;
+	cursor: e-resize;
+	transition: all 0.2s var(--cubic-bezier-ease-in-out);
+
+	&:hover {
+		background-color: var(--primary-color);
 	}
 }
 </style>
