@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { getItem, setItem } from 'localforage'
-import { type CreateClientOptions } from '@/main/mqtt'
+import { type IClientOptions } from 'mqtt'
 import { nanoid } from 'nanoid'
 
 const CONNECTIONS_STORAGE_KEY = 'connections'
@@ -8,11 +8,10 @@ const CONNECTIONS_STORAGE_KEY = 'connections'
 export type Connection = {
 	name: string
 	parentClientId: string
-	connected?: boolean
 	isGroup?: boolean
 	children?: Array<Connection>
 } & Record<string, any> &
-	CreateClientOptions
+	IClientOptions
 
 /**
  * 连接
@@ -23,11 +22,29 @@ export const useConnectionsStore = defineStore(
 		const isImmediateConnect = ref(false)
 
 		const sideWidth = ref(300)
+		const sideCollapsed = ref(false)
+		const contentSideWidth = ref(200)
+		const contentFooterHeight = ref(100)
+		const contentFooterCollapsed = ref(false)
 
 		const connectionTree = ref<Array<Connection>>([])
 
+		const connectionStatus = ref<Map<Connection['clientId'], boolean>>()
+
 		async function init() {
 			connectionTree.value = await getConnectionTree()
+			window.electronAPI.mqttOnConnect(handleConnectionConnected)
+			window.electronAPI.mqttOnError(handleConnectionError)
+			initConnectionStatus()
+		}
+
+		function initConnectionStatus() {
+			const clientIdList = []
+			connectionTree.value.forEach(node => {
+				if (node.isGroup) node.children.forEach(child => clientIdList.push(child.clientId))
+				else clientIdList.push(node.clientId)
+			})
+			connectionStatus.value = window.electronAPI.mqttConnectedBatch(clientIdList)
 		}
 
 		async function getConnectionTree() {
@@ -98,14 +115,40 @@ export const useConnectionsStore = defineStore(
 			await setItem(CONNECTIONS_STORAGE_KEY, toRaw(connectionTree.value))
 		}
 
+		function connectionUpdateNotify(clientId) {}
+
 		function generateClientId() {
 			return `naive_mqtt_${nanoid()}`
 		}
 
+		async function connect(clientId: Connection['clientId']) {
+			try {
+				const connection = getConnection(clientId)
+				if (!connection) return
+				const { success, message } = await window.electronAPI.mqttConnect(connection)
+				if (!success) window.$message.error(message)
+			} catch ({ message }) {
+				window.$message.error(message)
+			}
+		}
+
+		function handleConnectionConnected(clientId: Connection['clientId']) {
+			connectionStatus.value.set(clientId, true)
+		}
+
+		function handleConnectionError(message: string) {
+			window.$message.error(message)
+		}
+
 		return {
 			isImmediateConnect,
+			sideCollapsed,
 			sideWidth,
+			contentSideWidth,
+			contentFooterHeight,
 			connectionTree,
+			connectionStatus,
+			contentFooterCollapsed,
 			init,
 			getConnectionTree,
 			newConnection,
@@ -114,11 +157,20 @@ export const useConnectionsStore = defineStore(
 			getConnection,
 			updateConnectionTree,
 			generateClientId,
+			connect,
 		}
 	},
 	{
 		persist: {
-			pick: ['sideWidth', 'connectionTree', 'isImmediateConnect'],
+			pick: [
+				'sideCollapsed',
+				'sideWidth',
+				'contentSideWidth',
+				'contentFooterHeight',
+				'contentFooterCollapsed',
+				'connectionTree',
+				'isImmediateConnect',
+			],
 		},
 	},
 )

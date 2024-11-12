@@ -130,50 +130,50 @@ const rules = computed<FormRules>(() => ({
 	path: { required: isProtocolWs.value, message: t('common.input_required', { name: generateFormLabel('path') }) },
 }))
 const defaultData: Connection = {
-	name: null,
-	parentClientId: null,
+	name: '',
+	parentClientId: '',
 	isGroup: false,
 	children: [],
-	clientId: null,
+	clientId: '',
 	protocol: 'mqtt',
-	hostname: null,
-	port: null,
-	username: null,
-	password: null,
+	hostname: '',
+	port: 1883,
+	username: '',
+	password: '',
 	ssl: false,
 	rejectUnauthorized: true,
-	ALPNProtocols: null,
+	ALPNProtocols: undefined,
 	certificate: CertificateKeyEnum.Ca,
-	caPaths: null,
-	certPath: null,
-	keyPath: null,
+	caPaths: '',
+	certPath: '',
+	keyPath: '',
 	protocolVersion: 5,
-	connectTimeout: 10,
+	connectTimeout: 30000,
 	keepalive: 60,
-	manualConnect: true,
+	manualConnect: false,
 	reconnectPeriod: 4000,
 	clean: true,
 	properties: {
 		sessionExpiryInterval: 0,
-		receiveMaximum: null,
-		maximumPacketSize: null,
-		topicAliasMaximum: null,
-		requestResponseInformation: null,
-		requestProblemInformation: null,
+		receiveMaximum: undefined,
+		maximumPacketSize: undefined,
+		topicAliasMaximum: undefined,
+		requestResponseInformation: undefined,
+		requestProblemInformation: undefined,
 		userProperties: {},
 	},
 	will: {
-		topic: null,
+		topic: '',
 		qos: 0,
 		retain: false,
-		payload: null,
+		payload: '' as unknown as Buffer,
 		properties: {
-			payloadFormatIndicator: false,
-			willDelayInterval: null,
-			messageExpiryInterval: null,
-			contentType: null,
-			responseTopic: null,
-			correlationData: null,
+			payloadFormatIndicator: undefined,
+			willDelayInterval: undefined,
+			messageExpiryInterval: undefined,
+			contentType: '',
+			responseTopic: '',
+			correlationData: undefined,
 		},
 	},
 }
@@ -189,6 +189,7 @@ onBeforeMount(async () => {})
 //#endregion
 
 //#region 保存
+const submitLoading = ref(false)
 const formRef = useTemplateRef('form')
 enum SaveModeEnum {
 	SaveAndConnect,
@@ -208,9 +209,15 @@ const saveModeOptions = computed<Array<DropdownOption>>(() => [
 ])
 
 async function submit() {
-	await formRef.value.validate()
-	edit.value ? connectionStore.updateConnection(data.value) : connectionStore.newConnection(data.value)
-	visible.value = false
+	try {
+		submitLoading.value = true
+		await formRef.value.validate()
+		edit.value ? await connectionStore.updateConnection(data.value) : await connectionStore.newConnection(data.value)
+		visible.value = false
+		if (saveMode.value === SaveModeEnum.SaveAndConnect) await connectionStore.connect(data.value.clientId)
+	} finally {
+		submitLoading.value = false
+	}
 }
 //#endregion
 
@@ -329,7 +336,7 @@ defineExpose({ open })
 						</NFormItem>
 						<NFormItem :label="t('connection.new_connection_dialog.advanced.connect_timeout')">
 							<NInputNumber v-model:value="data.connectTimeout" :min="0">
-								<template #suffix>{{ t('common.seconds') }}</template>
+								<template #suffix>{{ t('common.milliseconds') }}</template>
 							</NInputNumber>
 						</NFormItem>
 						<NFormItem :label="t('connection.new_connection_dialog.advanced.keep_alive')">
@@ -398,7 +405,7 @@ defineExpose({ open })
 							<NSwitch v-model:value="data.will.retain" />
 						</NFormItem>
 						<NFormItem :label="t('connection.new_connection_dialog.last_will_and_testament.payload')">
-							<Editor class="payload-editor" v-model:value="data.will.payload" />
+							<Editor class="payload-editor" v-model:value="data.will.payload as unknown as string" />
 						</NFormItem>
 						<NFormItem
 							:label="t('connection.new_connection_dialog.last_will_and_testament.payload_format_indicator')"
@@ -448,7 +455,9 @@ defineExpose({ open })
 			<NFlex>
 				<NButton size="small" @click="visible = false">{{ t('common.cancel') }}</NButton>
 				<NButtonGroup>
-					<NButton type="primary" size="small" @click="submit()">{{ t('common.save') }}</NButton>
+					<NButton type="primary" size="small" :loading="submitLoading" @click="submit()">
+						{{ t('common.save') }}
+					</NButton>
 					<NPopselect v-model:value="saveMode" :options="saveModeOptions" size="small" placement="top-end">
 						<NButton type="primary" size="small" style="width: 30px">
 							<template #icon>

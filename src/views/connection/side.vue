@@ -4,7 +4,6 @@ import { type MessageSchema } from '@/configs/i18n'
 import { type DropdownOption, type TreeDropInfo, NPerformantEllipsis, NText, TreeOption } from 'naive-ui'
 import { Icon } from '@iconify/vue'
 import {
-	type RenderPrefix,
 	type RenderLabel,
 	type TreeOverrideNodeClickBehavior,
 	type TreeNodeProps,
@@ -15,24 +14,25 @@ import { type OnUpdateValueImpl as OnDropdownSelect } from 'naive-ui/es/dropdown
 import NewConnectionDialog from './new-connection-dialog.vue'
 import NewGroupDialog from './new-group-dialog.vue'
 import { type Connection, useConnectionsStore } from '@/store/modules/connections'
+import { type OnUpdateSelectedKeysImpl as OnTreeSelect } from 'naive-ui/es/tree/src/Tree'
 
+const emit = defineEmits<{ selectUpdate: [string] }>()
 const { t } = useI18n<{ message: MessageSchema }>()
-const connectionStore = useConnectionsStore()
+const connectionsStore = useConnectionsStore()
 
 //#region 宽度
-const sideCollapsed = ref(false)
-const sideWidth = computed(() => `${connectionStore.sideWidth}px`)
+const sideWidth = computed(() => `${connectionsStore.sideWidth}px`)
 const sideResizing = ref(false)
 
 function handleSideDrag({ clientX }: MouseEvent) {
 	sideResizing.value = true
 	const startX = clientX
-	const initialWidth = connectionStore.sideWidth
+	const initialWidth = connectionsStore.sideWidth
 	const onMouseMove = ({ clientX: _clientX }: MouseEvent) => {
-		if (!sideResizing) return
+		if (!sideResizing.value) return
 
 		const diffX = _clientX - startX
-		connectionStore.sideWidth = Math.max(200, initialWidth + diffX)
+		connectionsStore.sideWidth = Math.max(200, initialWidth + diffX)
 	}
 	const endResize = () => {
 		sideResizing.value = false
@@ -48,8 +48,8 @@ function handleSideDrag({ clientX }: MouseEvent) {
 const newConnectionDialogRef = useTemplateRef('newConnectionDialog')
 const newGroupDialogRef = useTemplateRef('newGroupDialog')
 enum NewButtonDropdownOptionsKeyEnum {
-	Connection = 'connection',
-	Group = 'group',
+	Connection,
+	Group,
 }
 const newButtonDropdownOptions: Array<DropdownOption> = [
 	{
@@ -72,42 +72,45 @@ const handleNewButtonSelect: OnSelectSelect = key => {
 
 //#region 连接树渲染
 const tree = computed<Array<TreeOption>>(() => {
-	return connectionStore.connectionTree.map(node => ({
+	return connectionsStore.connectionTree.map(node => ({
 		key: node.clientId,
 		label: node.name,
 		isLeaf: !node.isGroup,
+		prefix: () => generateTreeNodePrefix(node),
 		children: node.children.map(child => ({
 			key: child.clientId,
 			label: child.name,
 			isLeaf: !child.isGroup,
 			children: [],
+			prefix: () => generateTreeNodePrefix(child),
 			data: child,
 		})),
 		data: node,
 	}))
 })
-const treePrefixRender: RenderPrefix = ({ option }) => {
-	return (
-		<Icon
-			height="16"
-			width="16"
-			icon={option.isLeaf ? 'tabler:point-filled' : 'tabler:folder'}
-			color={
-				option.isLeaf
-					? option.data?.['connected']
-						? 'var(--success-color)'
-						: 'var(--text-color-3)'
-					: 'var(--primary-color)'
-			}
-		/>
-	)
-}
 const treeLabelRender: RenderLabel = ({ option }) => (
 	<NPerformantEllipsis tooltip={{ width: 'trigger' }}>{option.label}</NPerformantEllipsis>
 )
 const treeSwitcherIconRender: RenderSwitcherIcon = () => <Icon icon="tabler:chevron-right" />
 const treeOverrideDefaultNodeClickBehavior: TreeOverrideNodeClickBehavior = ({ option }) => {
 	return option.isLeaf ? 'default' : 'toggleExpand'
+}
+
+function generateTreeNodePrefix(node: Connection) {
+	return (
+		<Icon
+			height="16"
+			width="16"
+			icon={node.isGroup ? 'tabler:folder' : 'tabler:point-filled'}
+			color={
+				node.isGroup
+					? 'var(--primary-color)'
+					: connectionsStore.connectionStatus.get(node.clientId)
+						? 'var(--success-color)'
+						: 'var(--text-color-3)'
+			}
+		/>
+	)
 }
 //#endregion
 
@@ -174,10 +177,10 @@ const handleTreeDropdownSelect: OnDropdownSelect = (value, option) => {
 	if (value === TreeDropdownOptionsKeyEnum.Edit) newConnectionDialogRef.value.open(clientId)
 	if (value === TreeDropdownOptionsKeyEnum.Rename) newGroupDialogRef.value.open(clientId)
 	if (value === TreeDropdownOptionsKeyEnum.Duplicate) {
-		const connection = structuredClone(connectionStore.getConnection(clientId))
-		connection.clientId = connectionStore.generateClientId()
+		const connection = structuredClone(connectionsStore.getConnection(clientId))
+		connection.clientId = connectionsStore.generateClientId()
 		connection.name = `${connection.name} (Copy)`
-		connectionStore.newConnection(connection)
+		connectionsStore.newConnection(connection)
 	}
 	if (value === TreeDropdownOptionsKeyEnum.Delete) {
 		const title = t('common.delete')
@@ -192,7 +195,7 @@ const handleTreeDropdownSelect: OnDropdownSelect = (value, option) => {
 			positiveText: t('common.confirm'),
 			negativeText: t('common.cancel'),
 			onPositiveClick() {
-				connectionStore.deleteConnection(clientId as string)
+				connectionsStore.deleteConnection(clientId as string)
 			},
 		})
 	}
@@ -202,9 +205,9 @@ const handleTreeDropdownSelect: OnDropdownSelect = (value, option) => {
 
 //#region 连接树拖拽
 function handleTreeDrag({ node: _node, dragNode: _dragNode, dropPosition }: TreeDropInfo) {
-	const dragNode = connectionStore.getConnection(_dragNode.key as string)
-	const node = connectionStore.getConnection(_node.key as string)
-	const [dragNodeSiblings, dragNodeIndex] = findSiblings(dragNode.clientId, connectionStore.connectionTree)
+	const dragNode = connectionsStore.getConnection(_dragNode.key as string)
+	const node = connectionsStore.getConnection(_node.key as string)
+	const [dragNodeSiblings, dragNodeIndex] = findSiblings(dragNode.clientId, connectionsStore.connectionTree)
 	if (!dragNodeSiblings || dragNodeIndex === null || (dropPosition === 'inside' && (!node.isGroup || dragNode.isGroup)))
 		return
 	dragNodeSiblings.splice(dragNodeIndex, 1)
@@ -215,22 +218,22 @@ function handleTreeDrag({ node: _node, dragNode: _dragNode, dropPosition }: Tree
 			break
 		case 'before':
 		case 'after':
-			const [nodeSiblings, nodeIndex] = findSiblings(node.clientId, connectionStore.connectionTree)
+			const [nodeSiblings, nodeIndex] = findSiblings(node.clientId, connectionsStore.connectionTree)
 			if (!nodeSiblings || nodeIndex === null) return
 			dropPosition === 'before'
 				? nodeSiblings.splice(nodeIndex, 0, dragNode)
 				: nodeSiblings.splice(nodeIndex + 1, 0, dragNode)
 			break
 	}
-	connectionStore.connectionTree.forEach(node => {
+	connectionsStore.connectionTree.forEach(node => {
 		if (node.parentClientId) {
-			const isExist = connectionStore
+			const isExist = connectionsStore
 				.getConnection(node.parentClientId)
 				.children.some(child => child.clientId === node.clientId)
 			if (!isExist) node.parentClientId = null
 		}
 	})
-	connectionStore.updateConnectionTree(connectionStore.connectionTree)
+	connectionsStore.updateConnectionTree(connectionsStore.connectionTree)
 }
 
 function findSiblings(
@@ -247,10 +250,14 @@ function findSiblings(
 	return [null, null]
 }
 //#endregion
+
+const handleTreeSelect: OnTreeSelect = value => {
+	emit('selectUpdate', value[0] as string)
+}
 </script>
 
 <template>
-	<div class="side" :collapse="sideCollapsed" :resizing="sideResizing">
+	<div class="side" :collapse="connectionsStore.sideCollapsed" :resizing="sideResizing">
 		<div class="header">
 			<span>{{ t('main.menu.connection') }}</span>
 			<NDropdown
@@ -260,8 +267,8 @@ function findSiblings(
 				placement="bottom-start"
 				@select="handleNewButtonSelect"
 			>
-				<NButton size="tiny">
-					<Icon icon="tabler:plus" />
+				<NButton size="small" quaternary>
+					<template #icon> <Icon icon="tabler:plus" /></template>
 				</NButton>
 			</NDropdown>
 		</div>
@@ -270,14 +277,15 @@ function findSiblings(
 				:data="tree"
 				block-line
 				expand-on-click
-				:render-prefix="treePrefixRender"
 				:render-label="treeLabelRender"
 				:render-switcher-icon="treeSwitcherIconRender"
 				:override-default-node-click-behavior="treeOverrideDefaultNodeClickBehavior"
 				:node-props="treeNodeProps"
+				:cancelable="false"
 				virtual-scroll
 				draggable
 				@drop="handleTreeDrag"
+				@update:selected-keys="handleTreeSelect"
 			/>
 		</div>
 		<NDropdown
@@ -291,7 +299,11 @@ function findSiblings(
 			@clickoutside="treeDropdownVisible = false"
 			@select="handleTreeDropdownSelect"
 		/>
-		<button class="side_collapse" :collapse="sideCollapsed" @click="sideCollapsed = !sideCollapsed">
+		<button
+			class="side_collapse"
+			:collapse="connectionsStore.sideCollapsed"
+			@click="connectionsStore.sideCollapsed = !connectionsStore.sideCollapsed"
+		>
 			<Icon height="18" width="18" icon="tabler:chevron-left" />
 		</button>
 		<NewConnectionDialog ref="newConnectionDialog" />
@@ -310,6 +322,7 @@ function findSiblings(
 	gap: 8px;
 	border-right: 1px solid var(--border-color);
 	transition: all 0.2s var(--cubic-bezier-ease-in-out);
+	z-index: 1;
 
 	&[collapse='true'] {
 		transform: translateX(-17px);
@@ -322,33 +335,34 @@ function findSiblings(
 
 	&_collapse {
 		position: absolute;
-		right: 0px;
+		right: 0;
 		top: 50%;
 		height: 22px;
 		width: 22px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		transform: translateX(50%);
+		transform: translate(50%, 50%);
 		border-radius: 12px;
 		border: 1px solid var(--border-color);
 		cursor: pointer;
 		background-color: var(--card-color);
 		padding: 0px;
-		color: var(--text-color-2);
+		color: var(--text-color-3);
 		transition: all 0.2s var(--cubic-bezier-ease-in-out);
 		z-index: 2;
 
 		&[collapse='true'] {
-			transform: translateX(200%);
+			transform: translate(200%, 50%);
 
 			svg {
 				transform: rotate(180deg);
 			}
 		}
 
-		&:hover::before {
-			background-color: var(--hover-color);
+		&:hover {
+			box-shadow: var(--box-shadow-1);
+			color: var(--text-color-2);
 		}
 
 		&::before {
@@ -371,16 +385,17 @@ function findSiblings(
 }
 
 .header {
+	height: 45px;
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 	font-size: var(--font-size-large);
 	font-weight: bold;
-	border-bottom: 1px solid transparent;
+	border-bottom: 1px solid var(--border-color);
 	transition: all 0.2s var(--cubic-bezier-ease-in-out);
 	white-space: nowrap;
 	overflow: hidden;
-	padding: 8px 8px 0 8px;
+	padding: 0 8px;
 }
 
 .body {

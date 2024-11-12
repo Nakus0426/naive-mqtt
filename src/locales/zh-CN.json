@@ -16,7 +16,10 @@
 		"input_required": "请输入{name}",
 		"save": "保存",
 		"cancel": "取消",
-		"delete_confirm": "确认删除此{name}？"
+		"delete_confirm": "确认删除此{name}？",
+		"connect": "连接",
+		"disconnect": "断开连接",
+		"more": "更多"
 	},
 	"editor": {
 		"line": "行",

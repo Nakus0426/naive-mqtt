@@ -34,7 +34,7 @@ function init() {
 		theme: appStore.isDarkTheme ? 'vs-dark' : 'vs',
 		language: language.value,
 		renderLineHighlight: 'none',
-		fontFamily: 'JetBrainsMono-Regular, MiSans-Regular',
+		fontFamily: 'JetBrainsMono-Regular, HarmonyOS_Sans_Regular',
 		fontSize: 14,
 		overviewRulerBorder: false,
 		scrollbar: {

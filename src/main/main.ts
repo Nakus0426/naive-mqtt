@@ -1,9 +1,9 @@
 import { app, BrowserWindow, ipcMain, nativeTheme, dialog } from 'electron'
-import { createWindow } from './create-window'
-import { store } from './store'
+import { createWindow } from './create-window.ts'
+import { store } from './store.ts'
 import { createRequire } from 'node:module'
-import { Main } from './interface'
-import { Mqtt } from './mqtt'
+import { Main } from './interface.ts'
+import { mqtt } from './mqtt.ts'
 
 const require = createRequire(import.meta.url)
 
@@ -25,7 +25,7 @@ function createMainWindow() {
 	mainWindow = createWindow()
 	nativeTheme.themeSource = store.get('theme') || 'system'
 	store.set('theme', nativeTheme.themeSource)
-	new Mqtt(mainWindow)
+	mqtt(mainWindow)
 }
 
 ipcMain.on(Main.UpdateTheme, (_event, theme) => {

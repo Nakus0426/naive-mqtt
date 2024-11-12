@@ -2,11 +2,11 @@ import { GlobalThemeOverrides } from 'naive-ui'
 
 export const customDarkThemeOverrides: GlobalThemeOverrides = {
 	common: {
-		fontFamily: 'MiSans-Regular',
+		fontFamily: 'HarmonyOS_Sans_Regular',
 		borderRadius: '8px',
 		borderRadiusSmall: '4px',
-		dividerColor: '#27272A',
 		borderColor: '#3F3F46',
+		dividerColor: '#27272A',
 		popoverColor: '#18181B',
 		modalColor: '#18181B',
 		cardColor: '#18181B',
@@ -33,8 +33,8 @@ export const customDarkThemeOverrides: GlobalThemeOverrides = {
 		borderRadius: '0px',
 	},
 	Scrollbar: {
-		railInsetHorizontal: 'auto 3px 3px 3px',
-		railInsetVertical: '3px 3px 3px auto',
+		railInsetHorizontalBottom: 'auto 3px 3px 3px',
+		railInsetVerticalRight: '3px 3px 3px auto',
 		width: '4px',
 		height: '4px',
 		borderRadius: '2px',

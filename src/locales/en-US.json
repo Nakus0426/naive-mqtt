@@ -16,7 +16,10 @@
 		"input_required": "Please input {name}",
 		"save": "Save",
 		"cancel": "Cancel",
-		"delete_confirm": "Are you sure to delete this {name}?"
+		"delete_confirm": "Are you sure to delete this {name}?",
+		"connect": "Connect",
+		"disconnect": "Disconnect",
+		"more": "More"
 	},
 	"editor": {
 		"line": "Ln",

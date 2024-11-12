@@ -35,7 +35,7 @@ function handleLocaleUpdate(value: string) {
 </script>
 
 <template>
-	<div class="setting">
+	<OverlayScrollbar class="setting">
 		<DefineCell v-slot="{ title, $slots }">
 			<div class="cell">
 				<div class="cell_header">{{ title }}</div>
@@ -78,15 +78,13 @@ function handleLocaleUpdate(value: string) {
 				<NSelect style="width: 200px" v-model:value="locale" :options="locales" @update:value="handleLocaleUpdate" />
 			</CellItem>
 		</Cell>
-	</div>
+	</OverlayScrollbar>
 </template>
 
 <style scoped lang="scss">
 .setting {
-	top: 0;
-	right: 0;
-	bottom: 0;
-	left: 0;
+	height: 100%;
+	width: 100%;
 }
 
 .header {

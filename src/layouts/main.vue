@@ -85,7 +85,7 @@ function handleRouteChange(to: RouteRecordRaw) {
 					/>
 				</div>
 			</div>
-			<OverlayScrollbar class="content">
+			<div class="content">
 				<RouterView>
 					<template #default="{ Component }">
 						<Transition :name="transitionName">
@@ -95,7 +95,7 @@ function handleRouteChange(to: RouteRecordRaw) {
 						</Transition>
 					</template>
 				</RouterView>
-			</OverlayScrollbar>
+			</div>
 		</div>
 	</NElement>
 </template>
@@ -176,6 +176,7 @@ function handleRouteChange(to: RouteRecordRaw) {
 }
 
 .content {
+	position: relative;
 	flex: 1;
 	display: flex;
 	flex-direction: column;
@@ -184,6 +185,7 @@ function handleRouteChange(to: RouteRecordRaw) {
 	border-radius: var(--border-radius);
 	background-color: var(--card-color);
 	box-shadow: 1px 1px 3px 0px var(--divider-color);
+	overflow: hidden;
 	-webkit-app-region: no-drag;
 }
 </style>

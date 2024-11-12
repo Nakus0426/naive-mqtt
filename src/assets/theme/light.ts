@@ -2,11 +2,11 @@ import { GlobalThemeOverrides } from 'naive-ui'
 
 export const customLightThemeOverrides: GlobalThemeOverrides = {
 	common: {
-		fontFamily: 'MiSans-Regular',
+		fontFamily: 'HarmonyOS_Sans_Regular',
 		borderRadius: '8px',
 		borderRadiusSmall: '4px',
-		borderColor: '#dddddd',
-		dividerColor: '#e8e8e8',
+		borderColor: '#E9E9E9',
+		dividerColor: '#E0E6EA',
 		bodyColor: '#F8F8F8',
 		fontSizeSmall: '12px',
 		fontSizeMedium: '14px',
