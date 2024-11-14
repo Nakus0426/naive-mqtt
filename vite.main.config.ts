@@ -1,5 +1,5 @@
 import { defineConfig, mergeConfig, type ConfigEnv, type UserConfig } from 'vite'
-import { getBuildConfig, getBuildDefine, external, esModule, pluginHotRestart } from './vite.base.config'
+import { getBuildConfig, getBuildDefine, external, esModule, pluginHotRestart } from './vite.base.config.ts'
 
 export default defineConfig(env => {
 	const forgeEnv = env as ConfigEnv<'build'>

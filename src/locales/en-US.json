@@ -19,7 +19,8 @@
 		"delete_confirm": "Are you sure to delete this {name}?",
 		"connect": "Connect",
 		"disconnect": "Disconnect",
-		"more": "More"
+		"more": "More",
+		"subscriptions": "Subscriptions"
 	},
 	"editor": {
 		"line": "Ln",
@@ -56,6 +57,7 @@
 		"new_group": "New Group",
 		"edit_connection": "Edit Connection",
 		"edit_group": "Edit Group",
+		"new_subscription": "New Subscription",
 		"new_connection_dialog": {
 			"save_and_connect": "Save and Connect",
 			"save_only": "Save Only",

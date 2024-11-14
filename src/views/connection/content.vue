@@ -46,7 +46,7 @@ function handleMoreSelect(option: DropdownOption) {}
 			<div class="header_prefix">
 				<template v-if="group">
 					<span class="secondary">{{ group.name }}</span>
-					<Icon icon="tabler:chevron-right" color="var(--text-color-3)" />
+					<span class="secondary">/</span>
 				</template>
 				<span class="primary">{{ connection.name }}</span>
 			</div>

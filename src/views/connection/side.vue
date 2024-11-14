@@ -1,7 +1,7 @@
 <script setup lang="tsx">
 import { useI18n } from 'vue-i18n'
 import { type MessageSchema } from '@/configs/i18n'
-import { type DropdownOption, type TreeDropInfo, NPerformantEllipsis, NText, TreeOption } from 'naive-ui'
+import { type DropdownOption, type TreeDropInfo, type TreeOption, NPerformantEllipsis, NText } from 'naive-ui'
 import { Icon } from '@iconify/vue'
 import {
 	type RenderLabel,
@@ -12,9 +12,11 @@ import {
 import { type OnUpdateValueImpl as OnSelectSelect } from 'naive-ui/es/select/src/interface'
 import { type OnUpdateValueImpl as OnDropdownSelect } from 'naive-ui/es/dropdown/src/interface'
 import NewConnectionDialog from './new-connection-dialog.vue'
-import NewGroupDialog from './new-group-dialog.vue'
-import { type Connection, useConnectionsStore } from '@/store/modules/connections'
+import { type Connection, EditTypeEnum, useConnectionsStore } from '@/store/modules/connections'
 import { type OnUpdateSelectedKeysImpl as OnTreeSelect } from 'naive-ui/es/tree/src/Tree'
+import { type FormValidationStatus } from 'naive-ui/es/form/src/interface'
+import { nanoid } from 'nanoid'
+import { isNotNil } from 'es-toolkit'
 
 const emit = defineEmits<{ selectUpdate: [string] }>()
 const { t } = useI18n<{ message: MessageSchema }>()
@@ -46,7 +48,6 @@ function handleSideDrag({ clientX }: MouseEvent) {
 
 //#region 新建按钮
 const newConnectionDialogRef = useTemplateRef('newConnectionDialog')
-const newGroupDialogRef = useTemplateRef('newGroupDialog')
 enum NewButtonDropdownOptionsKeyEnum {
 	Connection,
 	Group,
@@ -66,7 +67,53 @@ const newButtonDropdownOptions: Array<DropdownOption> = [
 
 const handleNewButtonSelect: OnSelectSelect = key => {
 	if (key === NewButtonDropdownOptionsKeyEnum.Connection) newConnectionDialogRef.value.open()
-	else if (key === NewButtonDropdownOptionsKeyEnum.Group) newGroupDialogRef.value.open()
+	if (key === NewButtonDropdownOptionsKeyEnum.Group) {
+		if (groupClientId) {
+			connectionsStore.deleteConnection(groupClientId)
+			groupName.value = null
+			groupNameInputStatus.value = null
+		}
+		const clientId = nanoid()
+		connectionsStore.newConnection({
+			clientId,
+			name: null,
+			parentClientId: null,
+			isGroup: true,
+			editType: EditTypeEnum.New,
+			children: [],
+		})
+		groupClientId = clientId
+	}
+}
+//#endregion
+
+//#region 分组编辑
+const [DefineGroupNameInput, GroupNameInput] = createReusableTemplate<{
+	clientId: Connection['clientId']
+	editType: EditTypeEnum
+}>()
+let groupClientId: Connection['clientId']
+const groupName = ref<Connection['name']>()
+const groupNameInputStatus = ref<FormValidationStatus>()
+
+function handleGroupNameSubmit(clientId: Connection['clientId']) {
+	if (!groupName.value) {
+		groupNameInputStatus.value = 'error'
+		return
+	}
+	const connection = structuredClone(connectionsStore.getConnection(clientId))
+	connection.name = groupName.value
+	connection.editType = null
+	connectionsStore.updateConnection(connection)
+}
+
+function handleGroupNameCancel(editType: EditTypeEnum, clientId: Connection['clientId']) {
+	if (editType === EditTypeEnum.New) connectionsStore.deleteConnection(clientId)
+	else {
+		const connection = structuredClone(connectionsStore.getConnection(clientId))
+		connection.editType = null
+		connectionsStore.updateConnection(connection)
+	}
 }
 //#endregion
 
@@ -76,6 +123,7 @@ const tree = computed<Array<TreeOption>>(() => {
 		key: node.clientId,
 		label: node.name,
 		isLeaf: !node.isGroup,
+		disabled: isNotNil(node.editType),
 		prefix: () => generateTreeNodePrefix(node),
 		children: node.children.map(child => ({
 			key: child.clientId,
@@ -88,9 +136,12 @@ const tree = computed<Array<TreeOption>>(() => {
 		data: node,
 	}))
 })
-const treeLabelRender: RenderLabel = ({ option }) => (
-	<NPerformantEllipsis tooltip={{ width: 'trigger' }}>{option.label}</NPerformantEllipsis>
-)
+const treeLabelRender: RenderLabel = ({ option }) =>
+	isNotNil(option.data?.['editType']) ? (
+		<GroupNameInput clientId={option.data['clientId']} editType={option.data['editType']} />
+	) : (
+		<NPerformantEllipsis tooltip={{ width: 'trigger' }}>{option.label}</NPerformantEllipsis>
+	)
 const treeSwitcherIconRender: RenderSwitcherIcon = () => <Icon icon="tabler:chevron-right" />
 const treeOverrideDefaultNodeClickBehavior: TreeOverrideNodeClickBehavior = ({ option }) => {
 	return option.isLeaf ? 'default' : 'toggleExpand'
@@ -174,10 +225,15 @@ const treeNodeProps: TreeNodeProps = ({ option }) => {
 const handleTreeDropdownSelect: OnDropdownSelect = (value, option) => {
 	const isGroup = option.data['isGroup']
 	const clientId = option.data['clientId']
+	const connection = structuredClone(connectionsStore.getConnection(clientId))
 	if (value === TreeDropdownOptionsKeyEnum.Edit) newConnectionDialogRef.value.open(clientId)
-	if (value === TreeDropdownOptionsKeyEnum.Rename) newGroupDialogRef.value.open(clientId)
+	if (value === TreeDropdownOptionsKeyEnum.Rename) {
+		connection.editType = EditTypeEnum.Rename
+		groupName.value = connection.name
+		groupNameInputStatus.value = null
+		connectionsStore.updateConnection(connection)
+	}
 	if (value === TreeDropdownOptionsKeyEnum.Duplicate) {
-		const connection = structuredClone(connectionsStore.getConnection(clientId))
 		connection.clientId = connectionsStore.generateClientId()
 		connection.name = `${connection.name} (Copy)`
 		connectionsStore.newConnection(connection)
@@ -257,6 +313,17 @@ const handleTreeSelect: OnTreeSelect = value => {
 </script>
 
 <template>
+	<DefineGroupNameInput v-slot="{ clientId, editType }">
+		<NFlex :wrap="false" align="center" :size="4">
+			<NInput size="small" autofocus :status="groupNameInputStatus" v-model:value.trim="groupName" />
+			<NButton quaternary size="tiny" type="success" @click.stop="handleGroupNameSubmit(clientId)">
+				<template #icon> <Icon icon="tabler:check" /></template>
+			</NButton>
+			<NButton quaternary size="tiny" type="error" @click.stop="handleGroupNameCancel(editType, clientId)">
+				<template #icon> <Icon icon="tabler:x" /></template>
+			</NButton>
+		</NFlex>
+	</DefineGroupNameInput>
 	<div class="side" :collapse="connectionsStore.sideCollapsed" :resizing="sideResizing">
 		<div class="header">
 			<span>{{ t('main.menu.connection') }}</span>
@@ -307,7 +374,6 @@ const handleTreeSelect: OnTreeSelect = value => {
 			<Icon height="18" width="18" icon="tabler:chevron-left" />
 		</button>
 		<NewConnectionDialog ref="newConnectionDialog" />
-		<NewGroupDialog ref="newGroupDialog" />
 		<div class="drag" @mousedown="handleSideDrag" />
 	</div>
 </template>
@@ -391,7 +457,6 @@ const handleTreeSelect: OnTreeSelect = value => {
 	align-items: center;
 	font-size: var(--font-size-large);
 	font-weight: bold;
-	border-bottom: 1px solid var(--border-color);
 	transition: all 0.2s var(--cubic-bezier-ease-in-out);
 	white-space: nowrap;
 	overflow: hidden;

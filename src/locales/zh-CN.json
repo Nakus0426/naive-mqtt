@@ -19,7 +19,8 @@
 		"delete_confirm": "确认删除此{name}？",
 		"connect": "连接",
 		"disconnect": "断开连接",
-		"more": "更多"
+		"more": "更多",
+		"subscriptions": "订阅"
 	},
 	"editor": {
 		"line": "行",
@@ -56,6 +57,7 @@
 		"new_group": "新建分组",
 		"edit_connection": "编辑连接",
 		"edit_group": "编辑分组",
+		"new_subscription": "添加订阅",
 		"new_connection_dialog": {
 			"save_and_connect": "保存并连接",
 			"save_only": "仅保存",

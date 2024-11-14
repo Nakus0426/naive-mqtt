@@ -2,16 +2,24 @@ import { defineStore } from 'pinia'
 import { getItem, setItem } from 'localforage'
 import { type IClientOptions } from 'mqtt'
 import { nanoid } from 'nanoid'
+import { EventBusKey } from '@vueuse/core'
 
 const CONNECTIONS_STORAGE_KEY = 'connections'
+export enum EditTypeEnum {
+	New,
+	Rename,
+}
 
 export type Connection = {
 	name: string
 	parentClientId: string
 	isGroup?: boolean
+	editType?: EditTypeEnum
 	children?: Array<Connection>
 } & Record<string, any> &
 	IClientOptions
+
+export const ConnectionUpdateEventKey: EventBusKey<Connection['clientId']> = Symbol()
 
 /**
  * 连接
@@ -99,6 +107,7 @@ export const useConnectionsStore = defineStore(
 			if (!siblings || siblingIndex === null) return
 			siblings[siblingIndex] = connection
 			await setItem(CONNECTIONS_STORAGE_KEY, toRaw(connectionTree.value))
+			connectionUpdateNotify(connection.clientId)
 		}
 
 		function getConnection(clientId: Connection['clientId']) {
@@ -113,9 +122,12 @@ export const useConnectionsStore = defineStore(
 		async function updateConnectionTree(tree: Array<Connection>) {
 			connectionTree.value = tree
 			await setItem(CONNECTIONS_STORAGE_KEY, toRaw(connectionTree.value))
+			connectionUpdateNotify()
 		}
 
-		function connectionUpdateNotify(clientId) {}
+		function connectionUpdateNotify(clientId?: Connection['clientId']) {
+			useEventBus(ConnectionUpdateEventKey).emit(clientId)
+		}
 
 		function generateClientId() {
 			return `naive_mqtt_${nanoid()}`

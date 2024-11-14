@@ -6,6 +6,7 @@ import { type DropdownOption, type AutoCompleteOption, type FormRules, type Sele
 import { useConnectionsStore, type Connection } from '@/store/modules/connections'
 import { type OnUpdateValueImpl as OnSelectUpdate } from 'naive-ui/es/select/src/interface'
 import { type OnUpdateValueImpl as OnSwitchUpdate } from 'naive-ui/es/switch/src/interface'
+import { type OnSelectImpl as OnAutoCompleteSelect } from 'naive-ui/es/auto-complete/src/interface'
 
 const { t } = useI18n<{ message: MessageSchema }>()
 const connectionStore = useConnectionsStore()
@@ -28,6 +29,7 @@ function close() {
 	edit.value = false
 	userProperties.value = []
 }
+
 //#endregion
 
 //#region 表单标签
@@ -42,6 +44,7 @@ const formLabelMap = {
 function generateFormLabel(label: keyof typeof formLabelMap) {
 	return t(formLabelMap[label])
 }
+
 //#endregion
 
 //#region 通用属性
@@ -73,6 +76,7 @@ enum CertificateKeyEnum {
 	Ca,
 	Self,
 }
+
 const caFileFormVisible = computed(() => data.value.ssl && data.value.certificate === CertificateKeyEnum.Self)
 const caFileDialogLoading = ref({ ca: false, cert: false, key: false })
 
@@ -99,6 +103,7 @@ async function handleFilePickerClick(type: 'ca' | 'cert' | 'key') {
 		caFileDialogLoading.value[type] = false
 	}
 }
+
 //#endregion
 
 //#region 高级属性
@@ -119,6 +124,7 @@ const userProperties = ref([])
 function handleUserPropertiesCreate() {
 	return { key: '', value: '' }
 }
+
 //#endregion
 
 //#region 表单数据
@@ -181,20 +187,32 @@ const data = ref(structuredClone(defaultData))
 //#endregion
 
 //#region 模板
-const templateList = ref<Array<Connection>>([])
-const nameAutoCompleteOptions = computed<Array<AutoCompleteOption>>(() =>
-	templateList.value.map(({ name, clientId }) => ({ label: name, key: clientId })),
-)
-onBeforeMount(async () => {})
+const templateAutoCompleteOptions = computed(() => {
+	const res: Array<AutoCompleteOption> = []
+	connectionStore.connectionTree.forEach(node => {
+		if (node.isGroup) {
+			node.children.forEach(child => res.push({ label: child.name, value: child.clientId }))
+		} else res.push({ label: node.name, value: node.clientId })
+	})
+	return res
+})
+
+const handleTemplateAutoCompleteSelect: OnAutoCompleteSelect = value => {
+	const connection = structuredClone(connectionStore.getConnection(value as string))
+	connection.clientId = ''
+	data.value = connection
+}
 //#endregion
 
 //#region 保存
 const submitLoading = ref(false)
 const formRef = useTemplateRef('form')
+
 enum SaveModeEnum {
 	SaveAndConnect,
 	SaveOnly,
 }
+
 const saveMode = computed({
 	get() {
 		return connectionStore.isImmediateConnect ? SaveModeEnum.SaveAndConnect : SaveModeEnum.SaveOnly
@@ -219,6 +237,7 @@ async function submit() {
 		submitLoading.value = false
 	}
 }
+
 //#endregion
 
 defineExpose({ open })
@@ -242,7 +261,14 @@ defineExpose({ open })
 					<NCollapseItem :title="t('connection.new_connection_dialog.general.title')" name="general">
 						<NFormItem :label="generateFormLabel('name')" path="name">
 							<NInput v-model:value.trim="data.name" clearable v-if="edit" />
-							<NAutoComplete v-model:value="data.name" :options="nameAutoCompleteOptions" clearable v-else />
+							<NAutoComplete
+								v-model:value="data.name"
+								:options="templateAutoCompleteOptions"
+								clearable
+								:get-show="() => true"
+								v-else
+								@select="handleTemplateAutoCompleteSelect"
+							/>
 						</NFormItem>
 						<NFormItem :label="generateFormLabel('clientId')" path="clientId">
 							<NInputGroup>
