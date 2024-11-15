@@ -1,10 +1,12 @@
 import { defineStore } from 'pinia'
 import { getItem, setItem } from 'localforage'
-import { type IClientOptions } from 'mqtt'
+import { type IClientSubscribeOptions, type IClientOptions } from 'mqtt'
 import { nanoid } from 'nanoid'
 import { EventBusKey } from '@vueuse/core'
 
 const CONNECTIONS_STORAGE_KEY = 'connections'
+const SUBSCRIPTIONS_STORAGE_KEY = 'subscriptions'
+
 export enum EditTypeEnum {
 	New,
 	Rename,
@@ -20,6 +22,16 @@ export type Connection = {
 	IClientOptions
 
 export const ConnectionUpdateEventKey: EventBusKey<Connection['clientId']> = Symbol()
+export const SubscriptionUpdateEventKey: EventBusKey<Subscription['id']> = Symbol()
+
+export type Subscription = {
+	id: string
+	parentId?: string
+	name?: string
+	color?: string
+	topic: string
+	children?: Array<Subscription>
+} & IClientSubscribeOptions
 
 /**
  * 连接
@@ -27,24 +39,24 @@ export const ConnectionUpdateEventKey: EventBusKey<Connection['clientId']> = Sym
 export const useConnectionsStore = defineStore(
 	'CONNECTIONS',
 	() => {
-		const isImmediateConnect = ref(false)
-
 		const sideWidth = ref(300)
 		const sideCollapsed = ref(false)
 		const contentSideWidth = ref(200)
 		const contentFooterHeight = ref(100)
 		const contentFooterCollapsed = ref(false)
 
-		const connectionTree = ref<Array<Connection>>([])
-
-		const connectionStatus = ref<Map<Connection['clientId'], boolean>>()
-
 		async function init() {
 			connectionTree.value = await getConnectionTree()
+			subscriptionTree.value = await getSubscriptionTree()
 			window.electronAPI.mqttOnConnect(handleConnectionConnected)
 			window.electronAPI.mqttOnError(handleConnectionError)
 			initConnectionStatus()
 		}
+
+		//#region 连接增删改查
+		const connectionTree = ref<Array<Connection>>([])
+		const connectionStatus = ref<Map<Connection['clientId'], boolean>>()
+		const isImmediateConnect = ref(false)
 
 		function initConnectionStatus() {
 			const clientIdList = []
@@ -132,7 +144,9 @@ export const useConnectionsStore = defineStore(
 		function generateClientId() {
 			return `naive_mqtt_${nanoid()}`
 		}
+		//#endregion
 
+		//#region 连接客户端
 		async function connect(clientId: Connection['clientId']) {
 			try {
 				const connection = getConnection(clientId)
@@ -151,6 +165,85 @@ export const useConnectionsStore = defineStore(
 		function handleConnectionError(message: string) {
 			window.$message.error(message)
 		}
+		//#endregion
+
+		//#region 订阅增删改查
+		const subscriptionTree = ref<Array<Subscription>>([])
+
+		async function getSubscriptionTree() {
+			const res = await getItem<Array<Subscription>>(SUBSCRIPTIONS_STORAGE_KEY)
+			return res || []
+		}
+
+		async function newSubscription(subscription: Subscription) {
+			if (subscription.parentId)
+				for (const item of subscriptionTree.value) {
+					if (item.id === subscription.parentId) {
+						if (item.children) item.children.push(subscription)
+						else item.children = [subscription]
+						break
+					}
+				}
+			else subscriptionTree.value.push(subscription)
+			await setItem(SUBSCRIPTIONS_STORAGE_KEY, toRaw(subscriptionTree.value))
+		}
+
+		async function deleteSubscription(id: Subscription['id']) {
+			const queue = subscriptionTree.value.slice()
+			while (queue.length > 0) {
+				const currentNode = queue.shift()
+				for (let i = currentNode.children.length - 1; i >= 0; i--) {
+					const childNode = currentNode.children[i]
+					if (childNode.id === id) {
+						currentNode.children.splice(i, 1)
+						queue.push(childNode)
+					}
+				}
+				if (currentNode.id === id && subscriptionTree.value.some(item => item.id === id)) {
+					const index = subscriptionTree.value.findIndex(item => item.id === id)
+					connectionTree.value.splice(index, 1)
+				}
+			}
+			await setItem(SUBSCRIPTIONS_STORAGE_KEY, toRaw(subscriptionTree.value))
+		}
+
+		async function updateSubscription(subscription: Subscription) {
+			const findSiblings = (id: Subscription['id'], tree: Array<Subscription>) => {
+				if (!tree) return [null, null]
+				const index = tree.findIndex(node => node.id === id)
+				if (index !== -1) return [tree, index]
+				for (const node of tree) {
+					const [siblings, siblingIndex] = findSiblings(id, node.children)
+					if (siblings) return [siblings, siblingIndex]
+				}
+				return [null, null]
+			}
+			const [siblings, siblingIndex] = findSiblings(subscription.id, subscriptionTree.value)
+			if (!siblings || siblingIndex === null) return
+			siblings[siblingIndex] = subscription
+			await setItem(CONNECTIONS_STORAGE_KEY, toRaw(connectionTree.value))
+			subscriptionUpdateNotify(subscription.id)
+		}
+
+		function getSubscription(id: Subscription['id']) {
+			const queue = toRaw(subscriptionTree.value).slice()
+			while (queue.length > 0) {
+				let currentNode = queue.shift()
+				if (currentNode.id === id) return currentNode
+				currentNode.children.forEach(item => queue.push(item))
+			}
+		}
+
+		async function updateSubscriptionTree(tree: Array<Subscription>) {
+			subscriptionTree.value = tree
+			await setItem(SUBSCRIPTIONS_STORAGE_KEY, toRaw(subscriptionTree.value))
+			subscriptionUpdateNotify()
+		}
+
+		function subscriptionUpdateNotify(id?: Subscription['id']) {
+			useEventBus(SubscriptionUpdateEventKey).emit(id)
+		}
+		//#endregion
 
 		return {
 			isImmediateConnect,
@@ -162,7 +255,6 @@ export const useConnectionsStore = defineStore(
 			connectionStatus,
 			contentFooterCollapsed,
 			init,
-			getConnectionTree,
 			newConnection,
 			deleteConnection,
 			updateConnection,
@@ -170,6 +262,11 @@ export const useConnectionsStore = defineStore(
 			updateConnectionTree,
 			generateClientId,
 			connect,
+			newSubscription,
+			deleteSubscription,
+			updateSubscription,
+			getSubscription,
+			updateSubscriptionTree,
 		}
 	},
 	{
@@ -182,6 +279,7 @@ export const useConnectionsStore = defineStore(
 				'contentFooterCollapsed',
 				'connectionTree',
 				'isImmediateConnect',
+				'subscriptionTree',
 			],
 		},
 	},

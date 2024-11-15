@@ -385,7 +385,6 @@ const handleTreeSelect: OnTreeSelect = value => {
 	max-width: v-bind(sideWidth);
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
 	border-right: 1px solid var(--border-color);
 	transition: all 0.2s var(--cubic-bezier-ease-in-out);
 	z-index: 1;

@@ -113,8 +113,16 @@
 				"correlation_data": "对比数据"
 			}
 		},
-		"new_group_dialog": {
-			"name": "名称"
+		"new_subscription_dialog": {
+			"name": "名称",
+			"topic": "主题",
+			"qos": "QoS",
+			"color": "颜色",
+			"no_local_flag": "禁止本地转发",
+			"retain_as_published_flag": "发布时保留状态",
+			"retain_handling": "保留消息处理",
+			"topic_help": "订阅多个主题时，使用逗号(,)分隔",
+			"name_help": "订阅多个主题时，名称也使用逗号(,)分隔"
 		}
 	}
 }

@@ -44,7 +44,6 @@ const formLabelMap = {
 function generateFormLabel(label: keyof typeof formLabelMap) {
 	return t(formLabelMap[label])
 }
-
 //#endregion
 
 //#region 通用属性
@@ -255,8 +254,8 @@ defineExpose({ open })
 		:close-on-esc="false"
 		@after-leave="close()"
 	>
-		<OverlayScrollbar class="new-connections-dialog">
-			<NForm size="small" label-placement="left" label-width="120" :rules :model="data" ref="form">
+		<OverlayScrollbar class="new-connection-dialog">
+			<NForm size="small" label-placement="top" label-width="120" :rules :model="data" ref="form">
 				<NCollapse arrow-placement="right" display-directive="show" :default-expanded-names="['general']">
 					<NCollapseItem :title="t('connection.new_connection_dialog.general.title')" name="general">
 						<NFormItem :label="generateFormLabel('name')" path="name">
@@ -498,7 +497,7 @@ defineExpose({ open })
 </template>
 
 <style scoped lang="scss">
-.new-connections-dialog {
+.new-connection-dialog {
 	width: 70vw;
 	height: 60vh;
 	padding: 0 26px;

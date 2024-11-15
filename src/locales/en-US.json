@@ -113,8 +113,16 @@
 				"correlation_data": "Correlation Data"
 			}
 		},
-		"new_group_dialog": {
-			"name": "Name"
+		"new_subscription_dialog": {
+			"name": "Name",
+			"topic": "Topic",
+			"qos": "QoS",
+			"color": "Color",
+			"no_local_flag": "No Local Flag",
+			"retain_as_published_flag": "Retain as Published Flag",
+			"retain_handling": "Retain Handling",
+			"topic_help": "When subscribing to multiple topics, use commas(,) to separate them",
+			"name_help": "When subscribing to multiple topics, the names are also separated by commas(,)"
 		}
 	}
 }
