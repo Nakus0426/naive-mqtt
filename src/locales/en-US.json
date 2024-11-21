@@ -5,6 +5,8 @@
 		"delete": "Delete",
 		"edit": "Edit",
 		"copy": "Copy",
+		"copy_success": "Copied to clipboard",
+		"copy_fail": "Copy failed",
 		"confirm": "Confirm",
 		"duplicate": "Duplicate",
 		"generate": "Generate",
@@ -20,7 +22,8 @@
 		"connect": "Connect",
 		"disconnect": "Disconnect",
 		"more": "More",
-		"subscriptions": "Subscriptions"
+		"enable": "Enable",
+		"disable": "Disable"
 	},
 	"editor": {
 		"line": "Ln",
@@ -52,12 +55,20 @@
 	},
 	"connection": {
 		"connection": "Connection",
+		"connections": "Connections",
 		"group": "Group",
+		"ungroup": "Ungroup",
+		"subscription": "Subscription",
+		"subscriptions": "Subscriptions",
 		"new_connection": "New Connection",
 		"new_group": "New Group",
 		"edit_connection": "Edit Connection",
 		"edit_group": "Edit Group",
 		"new_subscription": "New Subscription",
+		"edit_subscription": "Edit Subscription",
+		"copy_topic": "Copy Topic",
+		"disconnect_success": "Disconnected",
+		"connect_success": "Connected",
 		"new_connection_dialog": {
 			"save_and_connect": "Save and Connect",
 			"save_only": "Save Only",

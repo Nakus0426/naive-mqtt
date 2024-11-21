@@ -11,6 +11,7 @@ export interface ElectronAPI {
 	mqttConnected: (clientId: IClientOptions['clientId']) => boolean
 	mqttConnectedBatch: (clientId: Array<IClientOptions['clientId']>) => Map<string, boolean>
 	mqttOnConnect: (callback: (clientId: IClientOptions['clientId']) => void) => void
+	mqttOnDisconnect: (callback: (clientId: IClientOptions['clientId']) => void) => void
 	mqttOnError: (callback: (message: string) => void) => void
 	openFileDialog: (options: OpenDialogOptions) => Promise<OpenDialogReturnValue['filePaths']>
 }

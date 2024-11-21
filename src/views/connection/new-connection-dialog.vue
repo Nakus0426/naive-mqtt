@@ -7,22 +7,24 @@ import { useConnectionsStore, type Connection } from '@/store/modules/connection
 import { type OnUpdateValueImpl as OnSelectUpdate } from 'naive-ui/es/select/src/interface'
 import { type OnUpdateValueImpl as OnSwitchUpdate } from 'naive-ui/es/switch/src/interface'
 import { type OnSelectImpl as OnAutoCompleteSelect } from 'naive-ui/es/auto-complete/src/interface'
+import { useConnection } from './use-connection'
 
 const { t } = useI18n<{ message: MessageSchema }>()
 const connectionStore = useConnectionsStore()
+const { newConnectionDialogEventHook } = useConnection()
 const icon = () => <Icon icon="tabler:layers-linked" />
 
 //#region 打开弹窗
 const visible = ref(false)
 const edit = ref(false)
 
-function open(clientId?: Connection['clientId']) {
-	if (clientId) {
+newConnectionDialogEventHook.on(({ type, clientId }) => {
+	if (type === 'edit') {
 		edit.value = true
 		data.value = structuredClone(toRaw(connectionStore.getConnection(clientId)))
 	}
 	visible.value = true
-}
+})
 
 function close() {
 	data.value = structuredClone(defaultData)
@@ -238,8 +240,6 @@ async function submit() {
 }
 
 //#endregion
-
-defineExpose({ open })
 </script>
 
 <template>

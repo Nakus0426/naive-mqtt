@@ -1,5 +1,5 @@
 import { type BrowserWindow, ipcMain } from 'electron'
-import { type IClientOptions, type MqttClient, connectAsync } from 'mqtt'
+import { type IClientOptions, type MqttClient, connect } from 'mqtt'
 import { Main } from './interface.ts'
 import { response } from './utils.ts'
 import { readFileSync } from 'node:fs'
@@ -8,7 +8,7 @@ import { omitBy, isNil } from 'es-toolkit'
 const clientPool = new Map<string, MqttClient>()
 
 export function mqtt(mainWindow: BrowserWindow) {
-	ipcMain.handle(Main.MqttConnect, async (event, options: IClientOptions) => {
+	ipcMain.handle(Main.MqttConnect, (event, options: IClientOptions) => {
 		try {
 			const { clientId } = options
 			let client = clientPool.get(clientId)
@@ -16,10 +16,18 @@ export function mqtt(mainWindow: BrowserWindow) {
 				const formatedOptions = generateOptions(options)
 				const { protocol, hostname, port } = formatedOptions
 				const url = `${protocol}://${hostname}:${port}`
-				client = await connectAsync(url, formatedOptions)
+				client = connect(url, formatedOptions)
 				client.on('connect', () => {
 					console.log('connected')
 					mainWindow.webContents.send(Main.MqttOnConnect, clientId)
+				})
+				client.on('disconnect', () => {
+					console.log('disconnected')
+					mainWindow.webContents.send(Main.MqttOnDisconnect, clientId)
+				})
+				client.on('end', () => {
+					console.log('end')
+					mainWindow.webContents.send(Main.MqttOnDisconnect, clientId)
 				})
 				client.on('error', error => {
 					console.log('error', error)

@@ -3,24 +3,34 @@ import { useI18n } from 'vue-i18n'
 import { type MessageSchema } from '@/configs/i18n'
 import { Icon } from '@iconify/vue'
 import { type FormRules } from 'naive-ui'
-import { useConnectionsStore, type Subscription } from '@/store/modules/connections.js'
+import { Connection, useConnectionsStore, type Subscription } from '@/store/modules/connections.js'
 import { nanoid } from 'nanoid'
+import { randomInt } from 'es-toolkit'
+import { isEmpty } from 'es-toolkit/compat'
+import { format } from 'date-fns'
 
 const { t } = useI18n<{ message: MessageSchema }>()
 const connectionsStore = useConnectionsStore()
 
 //#region 打开弹窗
 const visible = ref(false)
-const edit = ref(false)
+const isEdit = ref(false)
 
-function open(id?: Subscription['id']) {
+function open(clientId: Connection['clientId']) {
+	data.value.clientId = clientId
 	visible.value = true
-	edit.value = !!id
-	if (edit.value) data.value = structuredClone(connectionsStore.getSubscription(id))
+}
+
+async function edit(clientId: Connection['clientId'], id: Subscription['id']) {
+	isEdit.value = true
+	const subscription = await connectionsStore.getSubscription(clientId, id)
+	data.value = structuredClone(subscription)
+	visible.value = true
 }
 
 function close() {
-	edit.value = false
+	isEdit.value = false
+	defaultData.color = generateColor()
 	data.value = structuredClone(defaultData)
 }
 //#endregion
@@ -32,6 +42,7 @@ const rules = computed<FormRules>(() => ({
 }))
 const defaultData: Subscription = {
 	id: nanoid(),
+	clientId: '',
 	name: '',
 	color: generateColor(),
 	topic: '',
@@ -39,16 +50,13 @@ const defaultData: Subscription = {
 	nl: false,
 	rap: false,
 	rh: 0,
+	children: [],
+	isGroup: false,
 }
 const data = ref<Subscription>(structuredClone(defaultData))
 
 function generateColor() {
-	const letters = '0123456789ABCDEF'
-	let color = '#'
-	for (let i = 0; i < 6; i++) {
-		color += letters[Math.floor(Math.random() * 16)]
-	}
-	return color
+	return `rgb(${randomInt(0, 255)},${randomInt(0, 255)},${randomInt(0, 255)})`
 }
 //#endregion
 
@@ -59,9 +67,9 @@ const submitLoading = ref(false)
 async function submit() {
 	try {
 		submitLoading.value = true
-
 		await formRef.value.validate()
-		edit.value
+		if (isEmpty(data.value.name)) data.value.name = format(new Date(), 'yyyyMMddHHmmss')
+		isEdit.value
 			? await connectionsStore.updateSubscription(data.value)
 			: await connectionsStore.newSubscription(data.value)
 		visible.value = false
@@ -71,7 +79,7 @@ async function submit() {
 }
 //#endregion
 
-defineExpose({ open })
+defineExpose({ open, edit })
 </script>
 
 <template>
@@ -79,7 +87,7 @@ defineExpose({ open })
 		v-model:show="visible"
 		preset="dialog"
 		:icon="() => h(Icon, { icon: 'tabler:rss' })"
-		:title="t(`connection.${edit ? 'edit' : 'new'}_subscription`)"
+		:title="t(`connection.${isEdit ? 'edit' : 'new'}_subscription`)"
 		to=".main"
 		:auto-focus="false"
 		:mask-closable="false"
@@ -103,7 +111,7 @@ defineExpose({ open })
 					</NFormItemGridItem>
 					<NFormItemGridItem :label="t('connection.new_subscription_dialog.color')">
 						<NFlex style="width: 100%" align="center" :size="4" :wrap="false">
-							<NColorPicker v-model:value="data.color" :modes="['hex']" :show-alpha="false" />
+							<NColorPicker v-model:value="data.color" :modes="['rgb']" :show-alpha="false" />
 							<NButton size="small" @click="data.color = generateColor()">{{ t('common.generate') }}</NButton>
 						</NFlex>
 					</NFormItemGridItem>

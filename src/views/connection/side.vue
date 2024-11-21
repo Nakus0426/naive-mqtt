@@ -11,16 +11,17 @@ import {
 } from 'naive-ui/lib/tree/src/interface'
 import { type OnUpdateValueImpl as OnSelectSelect } from 'naive-ui/es/select/src/interface'
 import { type OnUpdateValueImpl as OnDropdownSelect } from 'naive-ui/es/dropdown/src/interface'
-import NewConnectionDialog from './new-connection-dialog.vue'
 import { type Connection, EditTypeEnum, useConnectionsStore } from '@/store/modules/connections'
 import { type OnUpdateSelectedKeysImpl as OnTreeSelect } from 'naive-ui/es/tree/src/Tree'
 import { type FormValidationStatus } from 'naive-ui/es/form/src/interface'
 import { nanoid } from 'nanoid'
 import { isNotNil } from 'es-toolkit'
+import { useConnection } from './use-connection'
 
-const emit = defineEmits<{ selectUpdate: [string] }>()
+const emit = defineEmits<{ selectUpdate: [string]; delete: [string] }>()
 const { t } = useI18n<{ message: MessageSchema }>()
 const connectionsStore = useConnectionsStore()
+const { newConnectionDialogEventHook, connectionDeleteConfirmEventHook } = useConnection()
 
 //#region 宽度
 const sideWidth = computed(() => `${connectionsStore.sideWidth}px`)
@@ -47,7 +48,6 @@ function handleSideDrag({ clientX }: MouseEvent) {
 //#endregion
 
 //#region 新建按钮
-const newConnectionDialogRef = useTemplateRef('newConnectionDialog')
 enum NewButtonDropdownOptionsKeyEnum {
 	Connection,
 	Group,
@@ -60,13 +60,13 @@ const newButtonDropdownOptions: Array<DropdownOption> = [
 	},
 	{
 		label: () => t('connection.new_group'),
-		icon: () => <Icon height="16" width="16" icon="tabler:folder" />,
+		icon: () => <Icon height="16" width="16" icon="tabler:folder-plus" />,
 		key: NewButtonDropdownOptionsKeyEnum.Group,
 	},
 ]
 
 const handleNewButtonSelect: OnSelectSelect = key => {
-	if (key === NewButtonDropdownOptionsKeyEnum.Connection) newConnectionDialogRef.value.open()
+	if (key === NewButtonDropdownOptionsKeyEnum.Connection) newConnectionDialogEventHook.trigger({ type: 'new' })
 	if (key === NewButtonDropdownOptionsKeyEnum.Group) {
 		if (groupClientId) {
 			connectionsStore.deleteConnection(groupClientId)
@@ -152,14 +152,8 @@ function generateTreeNodePrefix(node: Connection) {
 		<Icon
 			height="16"
 			width="16"
-			icon={node.isGroup ? 'tabler:folder' : 'tabler:point-filled'}
-			color={
-				node.isGroup
-					? 'var(--primary-color)'
-					: connectionsStore.connectionStatus.get(node.clientId)
-						? 'var(--success-color)'
-						: 'var(--text-color-3)'
-			}
+			icon={node.isGroup ? 'tabler:folder' : 'tabler:layers-linked'}
+			color={node.isGroup ? 'var(--primary-color)' : 'var(--text-color-3)'}
 		/>
 	)
 }
@@ -174,11 +168,15 @@ enum TreeDropdownOptionsKeyEnum {
 	Delete = 'delete',
 	Edit = 'edit',
 	Duplicate = 'duplicate',
+	Ungroup = 'ungroup',
 }
 
 const treeNodeProps: TreeNodeProps = ({ option }) => {
+	const connected = connectionsStore.connectionStatus.get(option.data['clientId'])
 	return {
+		connected,
 		onContextmenu({ clientX, clientY }) {
+			if (option.disabled) return
 			treeDropdownPosition.value = { x: clientX, y: clientY }
 			treeDropdownVisible.value = true
 			treeDropdownOptions.value = option.isLeaf
@@ -193,6 +191,7 @@ const treeNodeProps: TreeNodeProps = ({ option }) => {
 							label: t('common.edit'),
 							key: TreeDropdownOptionsKeyEnum.Edit,
 							icon: () => <Icon height="16" width="16" icon="tabler:edit" />,
+							disabled: connected,
 							data: option.data,
 						},
 						{ key: 'divider', type: 'divider' },
@@ -200,6 +199,7 @@ const treeNodeProps: TreeNodeProps = ({ option }) => {
 							label: () => <NText type="error">{t('common.delete')}</NText>,
 							key: TreeDropdownOptionsKeyEnum.Delete,
 							icon: () => <Icon height="16" width="16" color="var(--error-color)" icon="tabler:trash" />,
+							disabled: connected,
 							data: option.data,
 						},
 					]
@@ -212,6 +212,12 @@ const treeNodeProps: TreeNodeProps = ({ option }) => {
 						},
 						{ key: 'divider', type: 'divider' },
 						{
+							label: () => <NText type="error">{t('connection.ungroup')}</NText>,
+							key: TreeDropdownOptionsKeyEnum.Ungroup,
+							icon: () => <Icon height="16" width="16" color="var(--error-color)" icon="tabler:folder-off" />,
+							data: option.data,
+						},
+						{
 							label: () => <NText type="error">{t('common.delete')}</NText>,
 							key: TreeDropdownOptionsKeyEnum.Delete,
 							icon: () => <Icon height="16" width="16" color="var(--error-color)" icon="tabler:trash" />,
@@ -223,10 +229,9 @@ const treeNodeProps: TreeNodeProps = ({ option }) => {
 }
 
 const handleTreeDropdownSelect: OnDropdownSelect = (value, option) => {
-	const isGroup = option.data['isGroup']
 	const clientId = option.data['clientId']
 	const connection = structuredClone(connectionsStore.getConnection(clientId))
-	if (value === TreeDropdownOptionsKeyEnum.Edit) newConnectionDialogRef.value.open(clientId)
+	if (value === TreeDropdownOptionsKeyEnum.Edit) newConnectionDialogEventHook.trigger({ type: 'edit', clientId })
 	if (value === TreeDropdownOptionsKeyEnum.Rename) {
 		connection.editType = EditTypeEnum.Rename
 		groupName.value = connection.name
@@ -238,23 +243,14 @@ const handleTreeDropdownSelect: OnDropdownSelect = (value, option) => {
 		connection.name = `${connection.name} (Copy)`
 		connectionsStore.newConnection(connection)
 	}
-	if (value === TreeDropdownOptionsKeyEnum.Delete) {
-		const title = t('common.delete')
-		const content = () => (
-			<div style="padding: 20px 26px">
-				{t('common.delete_confirm', { name: t(`connection.${isGroup ? 'group' : 'connection'}`) })}
-			</div>
-		)
-		window.$dialog.warning({
-			title,
-			content,
-			positiveText: t('common.confirm'),
-			negativeText: t('common.cancel'),
-			onPositiveClick() {
-				connectionsStore.deleteConnection(clientId as string)
-			},
+	if (value === TreeDropdownOptionsKeyEnum.Ungroup) {
+		connection.children.forEach(child => {
+			child.parentClientId = null
+			connectionsStore.newConnection(child)
 		})
+		connectionsStore.deleteConnection(clientId)
 	}
+	if (value === TreeDropdownOptionsKeyEnum.Delete) connectionDeleteConfirmEventHook.trigger(clientId)
 	treeDropdownVisible.value = false
 }
 //#endregion
@@ -326,7 +322,7 @@ const handleTreeSelect: OnTreeSelect = value => {
 	</DefineGroupNameInput>
 	<div class="side" :collapse="connectionsStore.sideCollapsed" :resizing="sideResizing">
 		<div class="header">
-			<span>{{ t('main.menu.connection') }}</span>
+			<span>{{ t('connection.connections') }}</span>
 			<NDropdown
 				trigger="click"
 				:options="newButtonDropdownOptions"
@@ -344,13 +340,14 @@ const handleTreeSelect: OnTreeSelect = value => {
 				:data="tree"
 				block-line
 				expand-on-click
+				virtual-scroll
+				draggable
+				show-line
 				:render-label="treeLabelRender"
 				:render-switcher-icon="treeSwitcherIconRender"
 				:override-default-node-click-behavior="treeOverrideDefaultNodeClickBehavior"
 				:node-props="treeNodeProps"
 				:cancelable="false"
-				virtual-scroll
-				draggable
 				@drop="handleTreeDrag"
 				@update:selected-keys="handleTreeSelect"
 			/>
@@ -373,7 +370,6 @@ const handleTreeSelect: OnTreeSelect = value => {
 		>
 			<Icon height="18" width="18" icon="tabler:chevron-left" />
 		</button>
-		<NewConnectionDialog ref="newConnectionDialog" />
 		<div class="drag" @mousedown="handleSideDrag" />
 	</div>
 </template>
@@ -473,6 +469,28 @@ const handleTreeSelect: OnTreeSelect = value => {
 			display: flex;
 			flex: 1;
 			align-items: center;
+		}
+	}
+
+	:deep(.n-tree-node) {
+		position: relative;
+
+		&::after {
+			content: '';
+			position: absolute;
+			right: 8px;
+			top: 8px;
+			height: 8px;
+			width: 8px;
+			border-radius: 4px;
+		}
+
+		&[connected='true']::after {
+			background-color: var(--success-color);
+		}
+
+		&[connected='false']::after {
+			background-color: var(--icon-color);
 		}
 	}
 

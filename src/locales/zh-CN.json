@@ -5,6 +5,8 @@
 		"delete": "删除",
 		"edit": "编辑",
 		"copy": "复制",
+		"copy_success": "已复制至剪切板",
+		"copy_fail": "复制失败",
 		"confirm": "确认",
 		"duplicate": "复制",
 		"generate": "生成",
@@ -20,7 +22,8 @@
 		"connect": "连接",
 		"disconnect": "断开连接",
 		"more": "更多",
-		"subscriptions": "订阅"
+		"enable": "启用",
+		"disable": "禁用"
 	},
 	"editor": {
 		"line": "行",
@@ -52,12 +55,20 @@
 	},
 	"connection": {
 		"connection": "连接",
+		"connections": "连接",
 		"group": "分组",
+		"ungroup": "取消分组",
+		"subscription": "订阅",
+		"subscriptions": "订阅",
 		"new_connection": "新建连接",
 		"new_group": "新建分组",
 		"edit_connection": "编辑连接",
 		"edit_group": "编辑分组",
 		"new_subscription": "添加订阅",
+		"edit_subscription": "编辑订阅",
+		"copy_topic": "复制主题",
+		"disconnect_success": "连接已断开",
+		"connect_success": "已连接",
 		"new_connection_dialog": {
 			"save_and_connect": "保存并连接",
 			"save_only": "仅保存",

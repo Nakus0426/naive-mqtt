@@ -90,8 +90,16 @@
 	}
 
 	// Dropdown
-	.n-dropdown-menu {
-		border: 1px solid var(--border-color);
+	.n-dropdown {
+		&-menu {
+			border: 1px solid var(--border-color);
+		}
+
+		&-option-body {
+			&::before {
+				border-radius: calc(var(--n-border-radius) - 4px);
+			}
+		}
 	}
 
 	.n-base-select-menu {
@@ -194,6 +202,13 @@
 		&-trigger__fill {
 			border-radius: calc(var(--border-radius) - 4px);
 			overflow: hidden;
+		}
+	}
+
+	// Tree
+	.n-tree {
+		.n-tree-node-indent--is-leaf::after {
+			display: none;
 		}
 	}
 

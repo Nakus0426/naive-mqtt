@@ -8,12 +8,33 @@ import { useI18n } from 'vue-i18n'
 import { type MessageSchema } from '@/configs/i18n'
 import ContentSide from './content-side.vue'
 import ContentBody from './content-body.vue'
+import { useConnection } from './use-connection'
 
 const { clientId } = defineProps<{ clientId?: Connection['clientId'] }>()
 
 useProvideContent(clientId)
 const { connection, group, connected } = useContent()
+const { newConnectionDialogEventHook, connectionDeleteConfirmEventHook } = useConnection()
 const { t } = useI18n<{ message: MessageSchema }>()
+
+//#region 连接/断开
+const connectLoading = ref(false)
+
+async function handleConnectClick() {
+	try {
+		connectLoading.value = true
+		if (connected.value) {
+			const res = await window.electronAPI.mqttDisconnect(clientId)
+			if (res.success) window.$message.success(t('connection.disconnect_success'))
+		} else {
+			const res = await window.electronAPI.mqttConnect(toRaw(connection.value))
+			if (res.success) window.$message.success(t('connection.connect_success'))
+		}
+	} finally {
+		connectLoading.value = false
+	}
+}
+//#endregion
 
 //#region 更多
 enum MoreDropdownOptionsKeyEnum {
@@ -36,7 +57,10 @@ const moreDropdownOptions = computed<Array<DropdownOption>>(() => [
 	},
 ])
 
-function handleMoreSelect(option: DropdownOption) {}
+function handleMoreSelect(key: MoreDropdownOptionsKeyEnum) {
+	if (key === MoreDropdownOptionsKeyEnum.Edit) newConnectionDialogEventHook.trigger({ type: 'edit', clientId })
+	if (key === MoreDropdownOptionsKeyEnum.Delete) connectionDeleteConfirmEventHook.trigger(clientId)
+}
 //#endregion
 </script>
 
@@ -53,7 +77,13 @@ function handleMoreSelect(option: DropdownOption) {}
 			<div class="header_suffix">
 				<NTooltip placement="bottom">
 					<template #trigger>
-						<NButton size="small" quaternary :type="connected ? 'error' : 'success'">
+						<NButton
+							size="small"
+							quaternary
+							:type="connected ? 'error' : 'success'"
+							:loading="connectLoading"
+							@click="handleConnectClick()"
+						>
 							<template #icon>
 								<Icon :icon="connected ? 'tabler:plug-connected-x' : 'tabler:plug-connected'" />
 							</template>

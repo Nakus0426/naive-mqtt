@@ -12,6 +12,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 	mqttConnectedBatch: (...args) => ipcRenderer.sendSync(Main.MqttConnectedBatch, ...args),
 	mqttOnConnect: (callback: (...args: any[]) => void) =>
 		ipcRenderer.on(Main.MqttOnConnect, (_event, ...args) => callback(...args)),
+	mqttOnDisconnect: (callback: (...args: any[]) => void) =>
+		ipcRenderer.on(Main.MqttOnDisconnect, (_event, ...args) => callback(...args)),
 	mqttOnError: (callback: (...args: any[]) => void) =>
 		ipcRenderer.on(Main.MqttOnError, (_event, ...args) => callback(...args)),
 	openFileDialog: (...args) => ipcRenderer.invoke(Main.OpenFileDialog, ...args),
