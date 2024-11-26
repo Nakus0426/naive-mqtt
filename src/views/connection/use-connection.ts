@@ -30,7 +30,8 @@ const [useProvideConnection, useConnection] = createInjectionState(() => {
 				),
 			positiveText: t('common.confirm'),
 			negativeText: t('common.cancel'),
-			onPositiveClick() {
+			onPositiveClick: async () => {
+				if (connectionsStore.connectionStatus.get(clientId)) await connectionsStore.disconnect(clientId)
 				connectionsStore.deleteConnection(clientId as string)
 				connectionDeleteEventHook.trigger(clientId)
 			},

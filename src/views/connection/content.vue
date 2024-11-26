@@ -1,6 +1,7 @@
 <script setup lang="tsx">
-import { type Connection } from '@/store/modules/connections'
-import { type DropdownOption, NText } from 'naive-ui'
+import { type Connection, useConnectionsStore } from '@/store/modules/connections'
+import { type DropdownOption, NText, NTooltip } from 'naive-ui'
+import { type RenderOptionImpl as DropdownOptionRender } from 'naive-ui/es/dropdown/src/interface'
 import { Icon } from '@iconify/vue'
 import { nanoid } from 'nanoid'
 import { useProvideContent, useContent } from './use-content'
@@ -14,6 +15,7 @@ const { clientId } = defineProps<{ clientId?: Connection['clientId'] }>()
 
 useProvideContent(clientId)
 const { connection, group, connected } = useContent()
+const connectionsStore = useConnectionsStore()
 const { newConnectionDialogEventHook, connectionDeleteConfirmEventHook } = useConnection()
 const { t } = useI18n<{ message: MessageSchema }>()
 
@@ -23,13 +25,8 @@ const connectLoading = ref(false)
 async function handleConnectClick() {
 	try {
 		connectLoading.value = true
-		if (connected.value) {
-			const res = await window.electronAPI.mqttDisconnect(clientId)
-			if (res.success) window.$message.success(t('connection.disconnect_success'))
-		} else {
-			const res = await window.electronAPI.mqttConnect(toRaw(connection.value))
-			if (res.success) window.$message.success(t('connection.connect_success'))
-		}
+		if (connected.value) await connectionsStore.disconnect(clientId)
+		else await connectionsStore.connect(clientId)
 	} finally {
 		connectLoading.value = false
 	}
@@ -56,6 +53,11 @@ const moreDropdownOptions = computed<Array<DropdownOption>>(() => [
 		disabled: connected.value,
 	},
 ])
+const dropdownOptionRender: DropdownOptionRender = ({ node, option }) => (
+	<NTooltip content-style="white-space: nowrap;" placement="left" disabled={!option.disabled}>
+		{{ trigger: () => node, default: () => t('connection.disconnect_first') }}
+	</NTooltip>
+)
 
 function handleMoreSelect(key: MoreDropdownOptionsKeyEnum) {
 	if (key === MoreDropdownOptionsKeyEnum.Edit) newConnectionDialogEventHook.trigger({ type: 'edit', clientId })
@@ -92,8 +94,9 @@ function handleMoreSelect(key: MoreDropdownOptionsKeyEnum) {
 					{{ t(`common.${connected ? 'disconnect' : 'connect'}`) }}
 				</NTooltip>
 				<NDropdown
-					trigger="click"
 					:options="moreDropdownOptions"
+					:render-option="dropdownOptionRender"
+					trigger="click"
 					size="small"
 					placement="bottom-end"
 					to=".main"

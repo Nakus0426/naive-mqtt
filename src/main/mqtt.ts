@@ -1,22 +1,23 @@
 import { type BrowserWindow, ipcMain } from 'electron'
-import { type IClientOptions, type MqttClient, connect } from 'mqtt'
+import { type IClientOptions, type IClientSubscribeOptions, type MqttClient, connectAsync } from 'mqtt'
 import { Main } from './interface.ts'
 import { response } from './utils.ts'
 import { readFileSync } from 'node:fs'
 import { omitBy, isNil } from 'es-toolkit'
+import { type Subscription } from '@/store/modules/connections.ts'
 
 const clientPool = new Map<string, MqttClient>()
 
 export function mqtt(mainWindow: BrowserWindow) {
-	ipcMain.handle(Main.MqttConnect, (event, options: IClientOptions) => {
+	ipcMain.handle(Main.MqttConnect, async (_event, options: IClientOptions) => {
+		const { clientId } = options
+		let client = clientPool.get(clientId)
 		try {
-			const { clientId } = options
-			let client = clientPool.get(clientId)
 			if (!client) {
-				const formatedOptions = generateOptions(options)
+				const formatedOptions = generateConnectOptions(options)
 				const { protocol, hostname, port } = formatedOptions
 				const url = `${protocol}://${hostname}:${port}`
-				client = connect(url, formatedOptions)
+				client = await connectAsync(url, formatedOptions)
 				client.on('connect', () => {
 					console.log('connected')
 					mainWindow.webContents.send(Main.MqttOnConnect, clientId)
@@ -42,11 +43,12 @@ export function mqtt(mainWindow: BrowserWindow) {
 				return response(true)
 			}
 		} catch ({ message }) {
+			await client.endAsync()
 			return response(false, message)
 		}
 	})
 
-	ipcMain.handle(Main.MqttDisconnect, async (event, clientId: IClientOptions['clientId']) => {
+	ipcMain.handle(Main.MqttDisconnect, async (_event, clientId: IClientOptions['clientId']) => {
 		try {
 			const client = clientPool.get(clientId)
 			if (!client) return response(true)
@@ -70,9 +72,33 @@ export function mqtt(mainWindow: BrowserWindow) {
 		})
 		event.returnValue = res
 	})
+
+	ipcMain.handle(Main.MqttSubscribe, async (_event, subscription: Subscription) => {
+		try {
+			const client = clientPool.get(subscription.clientId)
+			if (!client) return response(false)
+			const res = await client.subscribeAsync(subscription.topic, generateSubscribeOptions(subscription))
+			console.log(res)
+			return response(true)
+		} catch (err) {
+			return response(false, err.message)
+		}
+	})
+
+	ipcMain.handle(Main.MqttUnsubscribe, async (_event, subscription: Subscription) => {
+		try {
+			const client = clientPool.get(subscription.clientId)
+			if (!client) return response(false)
+			const res = await client.unsubscribeAsync(subscription.topic)
+			console.log(res)
+			return response(true)
+		} catch (err) {
+			return response(false, err.message)
+		}
+	})
 }
 
-function generateOptions(options: IClientOptions) {
+function generateConnectOptions(options: IClientOptions) {
 	const res: IClientOptions = {
 		protocol: options.protocol,
 		protocolVersion: options.protocolVersion,
@@ -112,4 +138,13 @@ function generateOptions(options: IClientOptions) {
 		}
 	}
 	return res
+}
+
+function generateSubscribeOptions(subscription: Subscription): IClientSubscribeOptions {
+	return {
+		qos: subscription.qos,
+		nl: subscription.nl,
+		rap: subscription.rap,
+		rh: subscription.rh,
+	}
 }

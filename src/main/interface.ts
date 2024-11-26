@@ -5,6 +5,7 @@ export enum Main {
 	MqttConnect = 'connect',
 	MqttDisconnect = 'disconnect',
 	MqttSubscribe = 'subscribe',
+	MqttUnsubscribe = 'unsubscribe',
 	MqttOnConnect = 'on-connect',
 	MqttOnDisconnect = 'on-disconnect',
 	MqttOnError = 'on-error',

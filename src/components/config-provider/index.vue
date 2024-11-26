@@ -31,7 +31,7 @@ const localeMap = {
 	>
 		<NGlobalStyle v-if="globalStyle" />
 		<NLoadingBarProvider>
-			<NMessageProvider>
+			<NMessageProvider placement="bottom">
 				<NNotificationProvider>
 					<NDialogProvider>
 						<NModalProvider>

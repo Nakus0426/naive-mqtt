@@ -8,22 +8,27 @@ import { nanoid } from 'nanoid'
 import { randomInt } from 'es-toolkit'
 import { isEmpty } from 'es-toolkit/compat'
 import { format } from 'date-fns'
+import { useContent } from './use-content'
 
 const { t } = useI18n<{ message: MessageSchema }>()
 const connectionsStore = useConnectionsStore()
+const { subscriptionStatus, subscribe, unsubscribe } = useContent()
 
 //#region 打开弹窗
 const visible = ref(false)
 const isEdit = ref(false)
+let oldSubscription: Subscription
 
 function open(clientId: Connection['clientId']) {
 	data.value.clientId = clientId
+	data.value.id = nanoid()
 	visible.value = true
 }
 
 async function edit(clientId: Connection['clientId'], id: Subscription['id']) {
 	isEdit.value = true
 	const subscription = await connectionsStore.getSubscription(clientId, id)
+	oldSubscription = structuredClone(subscription)
 	data.value = structuredClone(subscription)
 	visible.value = true
 }
@@ -41,7 +46,7 @@ const rules = computed<FormRules>(() => ({
 	topic: { required: true, message: t('common.input_required', { name: topicFormLabel.value }) },
 }))
 const defaultData: Subscription = {
-	id: nanoid(),
+	id: '',
 	clientId: '',
 	name: '',
 	color: generateColor(),
@@ -69,9 +74,13 @@ async function submit() {
 		submitLoading.value = true
 		await formRef.value.validate()
 		if (isEmpty(data.value.name)) data.value.name = format(new Date(), 'yyyyMMddHHmmss')
-		isEdit.value
-			? await connectionsStore.updateSubscription(data.value)
-			: await connectionsStore.newSubscription(data.value)
+		if (isEdit.value) {
+			await connectionsStore.updateSubscription(data.value)
+			if (subscriptionStatus.value.get(data.value.id)) {
+				await unsubscribe(oldSubscription)
+				await subscribe(toRaw(data.value))
+			}
+		} else await connectionsStore.newSubscription(data.value)
 		visible.value = false
 	} finally {
 		submitLoading.value = false
@@ -100,13 +109,7 @@ defineExpose({ open, edit })
 		<OverlayScrollbar class="new-subscription-dialog">
 			<NForm size="small" label-width="auto" label-placement="top" :rules :model="data" ref="form">
 				<NGrid :cols="2" x-gap="24">
-					<NFormItemGridItem>
-						<template #label>
-							<NFlex align="center" :size="4">
-								<span>{{ t('connection.new_subscription_dialog.name') }}</span>
-								<HelpTooltip :content="t('connection.new_subscription_dialog.name_help')" />
-							</NFlex>
-						</template>
+					<NFormItemGridItem :label="t('connection.new_subscription_dialog.name')">
 						<NInput v-model:value="data.name" clearable />
 					</NFormItemGridItem>
 					<NFormItemGridItem :label="t('connection.new_subscription_dialog.color')">
@@ -115,13 +118,7 @@ defineExpose({ open, edit })
 							<NButton size="small" @click="data.color = generateColor()">{{ t('common.generate') }}</NButton>
 						</NFlex>
 					</NFormItemGridItem>
-					<NFormItemGridItem path="topic" :span="2">
-						<template #label>
-							<NFlex align="center" :size="4">
-								<span>{{ topicFormLabel }}</span>
-								<HelpTooltip :content="t('connection.new_subscription_dialog.topic_help')" />
-							</NFlex>
-						</template>
+					<NFormItemGridItem path="topic" :label="topicFormLabel" :span="2">
 						<NInput v-model:value="data.topic" type="textarea" />
 					</NFormItemGridItem>
 					<NFormItemGridItem :label="t('connection.new_subscription_dialog.qos')">

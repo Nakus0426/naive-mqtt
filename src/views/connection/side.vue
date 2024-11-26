@@ -1,7 +1,7 @@
 <script setup lang="tsx">
 import { useI18n } from 'vue-i18n'
 import { type MessageSchema } from '@/configs/i18n'
-import { type DropdownOption, type TreeDropInfo, type TreeOption, NPerformantEllipsis, NText } from 'naive-ui'
+import { type DropdownOption, type TreeDropInfo, type TreeOption, NPerformantEllipsis, NText, NTooltip } from 'naive-ui'
 import { Icon } from '@iconify/vue'
 import {
 	type RenderLabel,
@@ -10,7 +10,10 @@ import {
 	type RenderSwitcherIcon,
 } from 'naive-ui/lib/tree/src/interface'
 import { type OnUpdateValueImpl as OnSelectSelect } from 'naive-ui/es/select/src/interface'
-import { type OnUpdateValueImpl as OnDropdownSelect } from 'naive-ui/es/dropdown/src/interface'
+import {
+	type OnUpdateValueImpl as OnDropdownSelect,
+	type RenderOptionImpl as DropdownOptionRender,
+} from 'naive-ui/es/dropdown/src/interface'
 import { type Connection, EditTypeEnum, useConnectionsStore } from '@/store/modules/connections'
 import { type OnUpdateSelectedKeysImpl as OnTreeSelect } from 'naive-ui/es/tree/src/Tree'
 import { type FormValidationStatus } from 'naive-ui/es/form/src/interface'
@@ -170,6 +173,12 @@ enum TreeDropdownOptionsKeyEnum {
 	Duplicate = 'duplicate',
 	Ungroup = 'ungroup',
 }
+
+const treeDropdownOptionRender: DropdownOptionRender = ({ node, option }) => (
+	<NTooltip content-style="white-space: nowrap;" placement="right" disabled={!option.disabled}>
+		{{ trigger: () => node, default: () => t('connection.disconnect_first') }}
+	</NTooltip>
+)
 
 const treeNodeProps: TreeNodeProps = ({ option }) => {
 	const connected = connectionsStore.connectionStatus.get(option.data['clientId'])
@@ -357,6 +366,7 @@ const handleTreeSelect: OnTreeSelect = value => {
 			:show="treeDropdownVisible"
 			:x="treeDropdownPosition.x"
 			:y="treeDropdownPosition.y"
+			:render-option="treeDropdownOptionRender"
 			placement="bottom-start"
 			size="small"
 			to=".main"

@@ -2,7 +2,7 @@
 import { useI18n } from 'vue-i18n'
 import { type MessageSchema } from '@/configs/i18n'
 import { EditTypeEnum, type Subscription, useConnectionsStore } from '@/store/modules/connections'
-import { type TreeOption, type DropdownOption, type TreeDropInfo, NText, NPerformantEllipsis } from 'naive-ui'
+import { type TreeOption, type DropdownOption, type TreeDropInfo, NText, NPerformantEllipsis, NTooltip } from 'naive-ui'
 import { Icon } from '@iconify/vue'
 import { type OnUpdateValueImpl as OnSelectSelect } from 'naive-ui/es/select/src/interface'
 import {
@@ -11,7 +11,10 @@ import {
 	type TreeNodeProps,
 	type RenderSwitcherIcon,
 } from 'naive-ui/lib/tree/src/interface'
-import { type OnUpdateValueImpl as OnDropdownSelect } from 'naive-ui/es/dropdown/src/interface'
+import {
+	type OnUpdateValueImpl as OnDropdownSelect,
+	type RenderOptionImpl as DropdownOptionRender,
+} from 'naive-ui/es/dropdown/src/interface'
 import NewSubscriptionDialog from './new-subscription-dialog.vue'
 import { nanoid } from 'nanoid'
 import { useContent } from './use-content'
@@ -19,7 +22,7 @@ import { type FormValidationStatus } from 'naive-ui/es/form/src/interface'
 import { isNotNil, lowerFirst } from 'es-toolkit'
 
 const connectionsStore = useConnectionsStore()
-const { clientId, subscriptionTree } = useContent()
+const { clientId, connected, subscriptionTree, subscriptionStatus, subscribe, unsubscribe } = useContent()
 const { t } = useI18n<{ message: MessageSchema }>()
 const { copy, copied } = useClipboard()
 
@@ -144,10 +147,16 @@ enum TreeDropdownOptionsKeyEnum {
 const treeDropdownPosition = ref({ x: null, y: null })
 const treeDropdownVisible = ref(false)
 const treeDropdownOptions = ref<Array<DropdownOption>>()
+const dropdownOptionRender: DropdownOptionRender = ({ node, option }) => (
+	<NTooltip content-style="white-space: nowrap;" placement="right" disabled={!option.disabled}>
+		{{ trigger: () => node, default: () => t('connection.connect_first') }}
+	</NTooltip>
+)
 const treeNodeProps: TreeNodeProps = ({ option }) => {
+	const enabled = option.data['enabled']
 	return {
 		style: { '--color': option.data['color'] },
-		subscribed: false,
+		enabled,
 		onContextmenu({ clientX, clientY }) {
 			if (option.disabled) return
 			treeDropdownPosition.value = { x: clientX, y: clientY }
@@ -155,9 +164,19 @@ const treeNodeProps: TreeNodeProps = ({ option }) => {
 			treeDropdownOptions.value = option.isLeaf
 				? [
 						{
-							label: () => <NText type="success">{t('common.enable')}</NText>,
-							key: TreeDropdownOptionsKeyEnum.Enable,
-							icon: () => <Icon height="16" width="16" icon="tabler:check" color="var(--success-color)" />,
+							label: () => (
+								<NText type={enabled ? 'error' : 'success'}>{t(`common.${enabled ? 'disable' : 'enable'}`)}</NText>
+							),
+							key: enabled ? TreeDropdownOptionsKeyEnum.Disable : TreeDropdownOptionsKeyEnum.Enable,
+							icon: () => (
+								<Icon
+									height="16"
+									width="16"
+									icon={enabled ? 'tabler:x' : 'tabler:check'}
+									color={`var(--${enabled ? 'error' : 'success'}-color)`}
+								/>
+							),
+							disabled: !connected.value,
 							data: option.data,
 						},
 						{ key: nanoid(), type: 'divider' },
@@ -203,6 +222,12 @@ const treeNodeProps: TreeNodeProps = ({ option }) => {
 const handleTreeDropdownSelect: OnDropdownSelect = async (value, option) => {
 	const isGroup = option.data['isGroup']
 	const id = option.data['id']
+	if (value === TreeDropdownOptionsKeyEnum.Enable) {
+		subscribe(toRaw(option.data as unknown as Subscription))
+	}
+	if (value === TreeDropdownOptionsKeyEnum.Disable) {
+		unsubscribe(toRaw(option.data as unknown as Subscription))
+	}
 	if (value === TreeDropdownOptionsKeyEnum.Rename) {
 		const subscription = structuredClone(await connectionsStore.getSubscription(clientId, id))
 		subscription.editType = EditTypeEnum.Rename
@@ -229,7 +254,8 @@ const handleTreeDropdownSelect: OnDropdownSelect = async (value, option) => {
 			content,
 			positiveText: t('common.confirm'),
 			negativeText: t('common.cancel'),
-			onPositiveClick() {
+			onPositiveClick: async () => {
+				if (subscriptionStatus.value.get(id)) await unsubscribe(toRaw(option.data as Subscription))
 				connectionsStore.deleteSubscription(clientId, id)
 			},
 		})
@@ -349,8 +375,8 @@ function findNode(tree: Array<Subscription>, id: Subscription['id']) {
 		<div class="header">
 			<span>{{ t('connection.subscriptions') }}</span>
 			<NDropdown
-				trigger="click"
 				:options="newButtonDropdownOptions"
+				trigger="click"
 				size="small"
 				placement="bottom-start"
 				@select="handleNewButtonSelect"
@@ -362,12 +388,12 @@ function findNode(tree: Array<Subscription>, id: Subscription['id']) {
 		</div>
 		<div class="body">
 			<NTree
-				:data="tree"
 				block-line
 				expand-on-click
 				virtual-scroll
 				draggable
 				show-line
+				:data="tree"
 				:render-label="treeLabelRender"
 				:render-switcher-icon="treeSwitcherIconRender"
 				:override-default-node-click-behavior="treeOverrideDefaultNodeClickBehavior"
@@ -375,13 +401,14 @@ function findNode(tree: Array<Subscription>, id: Subscription['id']) {
 				@drop="handleTreeDrag"
 			/>
 			<NDropdown
+				placement="bottom-start"
+				size="small"
+				to=".main"
 				:options="treeDropdownOptions"
 				:show="treeDropdownVisible"
 				:x="treeDropdownPosition.x"
 				:y="treeDropdownPosition.y"
-				placement="bottom-start"
-				size="small"
-				to=".main"
+				:render-option="dropdownOptionRender"
 				@clickoutside="treeDropdownVisible = false"
 				@select="handleTreeDropdownSelect"
 			/>
@@ -438,11 +465,11 @@ function findNode(tree: Array<Subscription>, id: Subscription['id']) {
 	:deep(.n-tree-node) {
 		position: relative;
 
-		&[subscribed='true'] {
+		&[enabled='true'] {
 			background: var(--tab-color);
 		}
 
-		&[subscribed='false'] {
+		&[enabled='false'] {
 			background: transparent;
 		}
 	}

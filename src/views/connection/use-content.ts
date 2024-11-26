@@ -22,21 +22,49 @@ const [useProvideContent, useContent] = createInjectionState((clientId: Connecti
 	}
 	updateConnection()
 
-	useEventBus(ConnectionUpdateEventKey).on(() => updateConnection())
+	useEventBus(ConnectionUpdateEventKey).on(() => {
+		updateConnection()
+		initSubscriptionStatus()
+	})
 	//#endregion
 
 	//#region 订阅
 	const subscriptionTree = ref<Array<Subscription>>([])
+	const subscriptionStatus = ref(new Map<Subscription['id'], boolean>())
+
+	useEventBus(SubscriptionUpdateEventKey).on(() => updateSubscriptionTree())
 
 	async function updateSubscriptionTree() {
 		subscriptionTree.value = await connectionsStore.getSubscriptionTree(clientId)
 	}
 	updateSubscriptionTree()
 
-	useEventBus(SubscriptionUpdateEventKey).on(() => updateSubscriptionTree())
+	async function subscribe(subscription: Subscription) {
+		if (subscriptionStatus.value.get(subscription.id)) return
+		await window.electronAPI.mqttSubscribe(subscription)
+		subscriptionStatus.value.set(subscription.id, true)
+		subscription.enabled = true
+		connectionsStore.updateSubscription(subscription)
+	}
+
+	async function unsubscribe(subscription: Subscription) {
+		if (!subscriptionStatus.value.get(subscription.id)) return
+		await window.electronAPI.mqttUnsubscribe(subscription)
+		subscriptionStatus.value.set(subscription.id, false)
+		subscription.enabled = false
+		connectionsStore.updateSubscription(subscription)
+	}
+
+	function initSubscriptionStatus() {
+		subscriptionTree.value.forEach(node => {
+			node.enabled && !subscriptionStatus.value.get(node.id) && subscribe(node)
+			node.children.forEach(child => child.enabled && !subscriptionStatus.value.get(child.id) && subscribe(child))
+		})
+	}
+
 	//#endregion
 
-	return { clientId, connection, group, connected, subscriptionTree }
+	return { clientId, connection, group, connected, subscriptionTree, subscriptionStatus, subscribe, unsubscribe }
 })
 
 export { useProvideContent, useContent }

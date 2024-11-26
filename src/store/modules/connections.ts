@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { getItem, setItem } from 'localforage'
+import { getItem, removeItem, setItem } from 'localforage'
 import { type IClientSubscribeOptions, type IClientOptions } from 'mqtt'
 import { nanoid } from 'nanoid'
 
@@ -27,6 +27,7 @@ export type Subscription = {
 	clientId?: Connection['clientId']
 	parentId?: string
 	name?: string
+	enabled?: boolean
 	color?: string
 	topic?: string
 	isGroup?: boolean
@@ -103,6 +104,7 @@ export const useConnectionsStore = defineStore(
 				}
 			}
 			await setItem(CONNECTIONS_STORAGE_KEY, toRaw(connectionTree.value))
+			await removeItem(clientId)
 		}
 
 		async function updateConnection(connection: Connection) {
@@ -153,7 +155,18 @@ export const useConnectionsStore = defineStore(
 				const connection = getConnection(clientId)
 				if (!connection) return
 				const { success, message } = await window.electronAPI.mqttConnect(connection)
-				if (!success) window.$message.error(message)
+				if (success) connectionStatus.value.set(clientId, true)
+				else window.$message.error(message)
+			} catch ({ message }) {
+				window.$message.error(message)
+			}
+		}
+
+		async function disconnect(clientId: Connection['clientId']) {
+			try {
+				const { success, message } = await window.electronAPI.mqttDisconnect(clientId)
+				if (success) connectionStatus.value.set(clientId, false)
+				else window.$message.error(message)
 			} catch ({ message }) {
 				window.$message.error(message)
 			}
@@ -272,6 +285,7 @@ export const useConnectionsStore = defineStore(
 			updateConnectionTree,
 			generateClientId,
 			connect,
+			disconnect,
 			getSubscriptionTree,
 			newSubscription,
 			deleteSubscription,
@@ -290,7 +304,6 @@ export const useConnectionsStore = defineStore(
 				'contentFooterCollapsed',
 				'connectionTree',
 				'isImmediateConnect',
-				'subscriptionTree',
 			],
 		},
 	},

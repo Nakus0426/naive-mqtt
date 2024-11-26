@@ -69,6 +69,8 @@
 		"copy_topic": "复制主题",
 		"disconnect_success": "连接已断开",
 		"connect_success": "已连接",
+		"disconnect_first": "请先断开连接",
+		"connect_first": "请先建立连接",
 		"new_connection_dialog": {
 			"save_and_connect": "保存并连接",
 			"save_only": "仅保存",
@@ -131,9 +133,7 @@
 			"color": "颜色",
 			"no_local_flag": "禁止本地转发",
 			"retain_as_published_flag": "发布时保留状态",
-			"retain_handling": "保留消息处理",
-			"topic_help": "订阅多个主题时，使用逗号(,)分隔",
-			"name_help": "订阅多个主题时，名称也使用逗号(,)分隔"
+			"retain_handling": "保留消息处理"
 		}
 	}
 }
