@@ -255,223 +255,251 @@ async function submit() {
 		@after-leave="close()"
 	>
 		<OverlayScrollbar class="new-connection-dialog">
-			<NForm size="small" label-placement="top" label-width="120" :rules :model="data" ref="form">
+			<NForm size="small" label-placement="top" label-width="auto" :rules :model="data" ref="form">
 				<NCollapse arrow-placement="right" display-directive="show" :default-expanded-names="['general']">
 					<NCollapseItem :title="t('connection.new_connection_dialog.general.title')" name="general">
-						<NFormItem :label="generateFormLabel('name')" path="name">
-							<NInput v-model:value.trim="data.name" clearable v-if="edit" />
-							<NAutoComplete
-								v-model:value="data.name"
-								:options="templateAutoCompleteOptions"
-								clearable
-								:get-show="() => true"
-								v-else
-								@select="handleTemplateAutoCompleteSelect"
-							/>
-						</NFormItem>
-						<NFormItem :label="generateFormLabel('clientId')" path="clientId">
-							<NInputGroup>
-								<NInput v-model:value="data.clientId" clearable />
-								<NButton @click="generateClientId()">{{ t('common.generate') }}</NButton>
-							</NInputGroup>
-						</NFormItem>
-						<NFormItem :label="generateFormLabel('host')" path="hostname">
-							<NInputGroup>
-								<NSelect
-									v-model:value="data.protocol"
-									style="width: 40%"
-									:options="protocolOptions"
-									@update:value="handleProtocolUpdate"
+						<NGrid :cols="2" x-gap="24">
+							<NFormItemGridItem :label="generateFormLabel('name')" path="name">
+								<NInput v-model:value.trim="data.name" clearable v-if="edit" />
+								<NAutoComplete
+									v-model:value="data.name"
+									:options="templateAutoCompleteOptions"
+									clearable
+									:get-show="() => true"
+									v-else
+									@select="handleTemplateAutoCompleteSelect"
 								/>
-								<NInput v-model:value.trim="data.hostname" clearable />
-							</NInputGroup>
-						</NFormItem>
-						<NFormItem :label="generateFormLabel('port')" path="port">
-							<NInputNumber v-model:value="data.port" :min="0" :max="65535" :precision="0" clearable />
-						</NFormItem>
-						<NFormItem :label="generateFormLabel('path')" path="path" v-show="isProtocolWs">
-							<NInput v-model:value.trim="data.path" clearable />
-						</NFormItem>
-						<NFormItem :label="t('connection.new_connection_dialog.general.username')">
-							<NInput v-model:value.trim="data.username" clearable />
-						</NFormItem>
-						<NFormItem :label="t('connection.new_connection_dialog.general.password')">
-							<NInput
-								v-model:value.trim="data.password as string"
-								clearable
-								type="password"
-								show-password-on="mousedown"
-							/>
-						</NFormItem>
-						<NFormItem :label="t('connection.new_connection_dialog.general.ssl')">
-							<NSwitch v-model:value="data.ssl" @update:value="handleSSLUpdate" />
-						</NFormItem>
-						<NFormItem :label="t('connection.new_connection_dialog.general.ssl_secure')" v-show="data.ssl">
-							<NSwitch v-model:value="data.rejectUnauthorized" :checked-value="false" :unchecked-value="true" />
-						</NFormItem>
-						<NFormItem :label="t('connection.new_connection_dialog.general.alpn')" v-show="data.ssl">
-							<NInput v-model:value.trim="data.ALPNProtocols as unknown as string" clearable />
-						</NFormItem>
-						<NFormItem :label="t('connection.new_connection_dialog.general.certificate')" v-show="data.ssl">
-							<NRadioGroup v-model:value="data.certificate" name="certificate" @update:value="handleCertificateUpdate">
-								<NRadio
-									:label="t('connection.new_connection_dialog.general.ca_server_signed')"
-									:value="CertificateKeyEnum.Ca"
+							</NFormItemGridItem>
+							<NFormItemGridItem :label="generateFormLabel('clientId')" path="clientId">
+								<NInputGroup>
+									<NInput v-model:value="data.clientId" clearable />
+									<NButton @click="generateClientId()">{{ t('common.generate') }}</NButton>
+								</NInputGroup>
+							</NFormItemGridItem>
+							<NFormItemGridItem :label="generateFormLabel('host')" path="hostname">
+								<NInputGroup>
+									<NSelect
+										v-model:value="data.protocol"
+										style="width: 40%"
+										:options="protocolOptions"
+										@update:value="handleProtocolUpdate"
+									/>
+									<NInput v-model:value.trim="data.hostname" clearable />
+								</NInputGroup>
+							</NFormItemGridItem>
+							<NFormItemGridItem :label="generateFormLabel('port')" path="port">
+								<NInputNumber v-model:value="data.port" :min="0" :max="65535" :precision="0" clearable />
+							</NFormItemGridItem>
+							<NFormItemGridItem :label="generateFormLabel('path')" path="path" v-show="isProtocolWs">
+								<NInput v-model:value.trim="data.path" clearable />
+							</NFormItemGridItem>
+							<NFormItemGridItem :label="t('connection.new_connection_dialog.general.username')">
+								<NInput v-model:value.trim="data.username" clearable />
+							</NFormItemGridItem>
+							<NFormItemGridItem :label="t('connection.new_connection_dialog.general.password')">
+								<NInput
+									v-model:value.trim="data.password as string"
+									clearable
+									type="password"
+									show-password-on="mousedown"
 								/>
-								<NRadio
-									:label="t('connection.new_connection_dialog.general.ca_self_signed')"
-									:value="CertificateKeyEnum.Self"
-								/>
-							</NRadioGroup>
-						</NFormItem>
-						<NFormItem :label="t('connection.new_connection_dialog.general.ca_file')" v-show="caFileFormVisible">
-							<NInputGroup>
-								<NInput v-model:value="data.caPaths as string" clearable readonly placeholder="请选择文件" />
-								<NButton :loading="caFileDialogLoading.ca" @click="handleFilePickerClick('ca')">
-									{{ t('connection.new_connection_dialog.general.select_file') }}
-								</NButton>
-							</NInputGroup>
-						</NFormItem>
-						<NFormItem
-							:label="t('connection.new_connection_dialog.general.client_certificate_file')"
-							v-show="caFileFormVisible"
-						>
-							<NInputGroup>
-								<NInput v-model:value="data.certPath as string" clearable readonly placeholder="请选择文件" />
-								<NButton :loading="caFileDialogLoading.cert" @click="handleFilePickerClick('cert')">
-									{{ t('connection.new_connection_dialog.general.select_file') }}
-								</NButton>
-							</NInputGroup>
-						</NFormItem>
-						<NFormItem
-							:label="t('connection.new_connection_dialog.general.client_key_file')"
-							v-show="caFileFormVisible"
-						>
-							<NInputGroup>
-								<NInput v-model:value="data.keyPath as string" clearable readonly placeholder="请选择文件" />
-								<NButton :loading="caFileDialogLoading.key" @click="handleFilePickerClick('key')">
-									{{ t('connection.new_connection_dialog.general.select_file') }}
-								</NButton>
-							</NInputGroup>
-						</NFormItem>
+							</NFormItemGridItem>
+							<NFormItemGridItem :label="t('connection.new_connection_dialog.general.ssl')">
+								<NSwitch v-model:value="data.ssl" @update:value="handleSSLUpdate" />
+							</NFormItemGridItem>
+							<NFormItemGridItem :label="t('connection.new_connection_dialog.general.ssl_secure')" v-show="data.ssl">
+								<NSwitch v-model:value="data.rejectUnauthorized" :checked-value="false" :unchecked-value="true" />
+							</NFormItemGridItem>
+							<NFormItemGridItem :label="t('connection.new_connection_dialog.general.alpn')" v-show="data.ssl">
+								<NInput v-model:value.trim="data.ALPNProtocols as unknown as string" clearable />
+							</NFormItemGridItem>
+							<NFormItemGridItem :label="t('connection.new_connection_dialog.general.certificate')" v-show="data.ssl">
+								<NRadioGroup
+									v-model:value="data.certificate"
+									name="certificate"
+									@update:value="handleCertificateUpdate"
+								>
+									<NRadio
+										:label="t('connection.new_connection_dialog.general.ca_server_signed')"
+										:value="CertificateKeyEnum.Ca"
+									/>
+									<NRadio
+										:label="t('connection.new_connection_dialog.general.ca_self_signed')"
+										:value="CertificateKeyEnum.Self"
+									/>
+								</NRadioGroup>
+							</NFormItemGridItem>
+							<NFormItemGridItem
+								:label="t('connection.new_connection_dialog.general.ca_file')"
+								v-show="caFileFormVisible"
+							>
+								<NInputGroup>
+									<NInput v-model:value="data.caPaths as string" clearable readonly placeholder="请选择文件" />
+									<NButton :loading="caFileDialogLoading.ca" @click="handleFilePickerClick('ca')">
+										{{ t('connection.new_connection_dialog.general.select_file') }}
+									</NButton>
+								</NInputGroup>
+							</NFormItemGridItem>
+							<NFormItemGridItem
+								:label="t('connection.new_connection_dialog.general.client_certificate_file')"
+								v-show="caFileFormVisible"
+							>
+								<NInputGroup>
+									<NInput v-model:value="data.certPath as string" clearable readonly placeholder="请选择文件" />
+									<NButton :loading="caFileDialogLoading.cert" @click="handleFilePickerClick('cert')">
+										{{ t('connection.new_connection_dialog.general.select_file') }}
+									</NButton>
+								</NInputGroup>
+							</NFormItemGridItem>
+							<NFormItemGridItem
+								:label="t('connection.new_connection_dialog.general.client_key_file')"
+								v-show="caFileFormVisible"
+							>
+								<NInputGroup>
+									<NInput v-model:value="data.keyPath as string" clearable readonly placeholder="请选择文件" />
+									<NButton :loading="caFileDialogLoading.key" @click="handleFilePickerClick('key')">
+										{{ t('connection.new_connection_dialog.general.select_file') }}
+									</NButton>
+								</NInputGroup>
+							</NFormItemGridItem>
+						</NGrid>
 					</NCollapseItem>
 					<NCollapseItem :title="t('connection.new_connection_dialog.advanced.title')" name="advanced">
-						<NFormItem :label="t('connection.new_connection_dialog.advanced.mqtt_version')">
-							<NSelect v-model:value="data.protocolVersion" :options="protocolVersionOptions" />
-						</NFormItem>
-						<NFormItem :label="t('connection.new_connection_dialog.advanced.connect_timeout')">
-							<NInputNumber v-model:value="data.connectTimeout" :min="0">
-								<template #suffix>{{ t('common.milliseconds') }}</template>
-							</NInputNumber>
-						</NFormItem>
-						<NFormItem :label="t('connection.new_connection_dialog.advanced.keep_alive')">
-							<NInputNumber v-model:value="data.keepalive" :min="0">
-								<template #suffix>{{ t('common.seconds') }}</template>
-							</NInputNumber>
-						</NFormItem>
-						<NFormItem :label="t('connection.new_connection_dialog.advanced.reconnect_period')">
-							<NInputNumber v-model:value="data.reconnectPeriod" :min="1">
-								<template #suffix>{{ t('common.milliseconds') }}</template>
-							</NInputNumber>
-						</NFormItem>
-						<NFormItem :label="t(`connection.new_connection_dialog.advanced.clean_${isMqtt5 ? 'start' : 'session'}`)">
-							<NSwitch v-model:value="data.clean" @update:value="handleCleanUpdate" />
-						</NFormItem>
-						<NFormItem :label="t('connection.new_connection_dialog.advanced.session_expiry_interval')" v-show="isMqtt5">
-							<NInputNumber v-model:value="data.properties.sessionExpiryInterval" :min="0" clearable>
-								<template #suffix>{{ t('common.seconds') }}</template>
-							</NInputNumber>
-						</NFormItem>
-						<NFormItem :label="t('connection.new_connection_dialog.advanced.receive_maximum')">
-							<NInputNumber v-model:value="data.properties.receiveMaximum" :min="1" clearable />
-						</NFormItem>
-						<NFormItem :label="t('connection.new_connection_dialog.advanced.maximum_packet_size')">
-							<NInputNumber v-model:value="data.properties.maximumPacketSize" :min="100" clearable />
-						</NFormItem>
-						<NFormItem :label="t('connection.new_connection_dialog.advanced.topic_alias_maximum')">
-							<NInputNumber v-model:value="data.properties.topicAliasMaximum" :min="1" clearable />
-						</NFormItem>
-						<NFormItem :label="t('connection.new_connection_dialog.advanced.request_response_info')">
-							<NSwitch v-model:value="data.properties.requestResponseInformation" />
-						</NFormItem>
-						<NFormItem :label="t('connection.new_connection_dialog.advanced.request_problem_info')">
-							<NSwitch v-model:value="data.properties.requestProblemInformation" />
-						</NFormItem>
-						<NFormItem :label="t('connection.new_connection_dialog.advanced.user_properties')">
-							<NDynamicInput v-model:value="userProperties" @create="handleUserPropertiesCreate">
-								<template #default="{ value }">
-									<NInputGroup>
-										<NInput
-											v-model:value="value.key"
-											:placeholder="t('connection.new_connection_dialog.advanced.key')"
-											clearable
-										/>
-										<NInput
-											v-model:value="value.value"
-											:placeholder="t('connection.new_connection_dialog.advanced.value')"
-											clearable
-										/>
-									</NInputGroup>
-								</template>
-							</NDynamicInput>
-						</NFormItem>
+						<NGrid :cols="4" x-gap="24">
+							<NFormItemGridItem span="2" :label="t('connection.new_connection_dialog.advanced.mqtt_version')">
+								<NSelect v-model:value="data.protocolVersion" :options="protocolVersionOptions" />
+							</NFormItemGridItem>
+							<NFormItemGridItem span="2" :label="t('connection.new_connection_dialog.advanced.connect_timeout')">
+								<NInputNumber v-model:value="data.connectTimeout" :min="0">
+									<template #suffix>{{ t('common.milliseconds') }}</template>
+								</NInputNumber>
+							</NFormItemGridItem>
+							<NFormItemGridItem span="2" :label="t('connection.new_connection_dialog.advanced.keep_alive')">
+								<NInputNumber v-model:value="data.keepalive" :min="0">
+									<template #suffix>{{ t('common.seconds') }}</template>
+								</NInputNumber>
+							</NFormItemGridItem>
+							<NFormItemGridItem span="2" :label="t('connection.new_connection_dialog.advanced.reconnect_period')">
+								<NInputNumber v-model:value="data.reconnectPeriod" :min="1">
+									<template #suffix>{{ t('common.milliseconds') }}</template>
+								</NInputNumber>
+							</NFormItemGridItem>
+							<NFormItemGridItem
+								span="2"
+								:label="t(`connection.new_connection_dialog.advanced.clean_${isMqtt5 ? 'start' : 'session'}`)"
+							>
+								<NSwitch v-model:value="data.clean" @update:value="handleCleanUpdate" />
+							</NFormItemGridItem>
+							<NFormItemGridItem
+								span="2"
+								:label="t('connection.new_connection_dialog.advanced.session_expiry_interval')"
+								v-show="isMqtt5"
+							>
+								<NInputNumber v-model:value="data.properties.sessionExpiryInterval" :min="0" clearable>
+									<template #suffix>{{ t('common.seconds') }}</template>
+								</NInputNumber>
+							</NFormItemGridItem>
+							<NFormItemGridItem span="2" :label="t('connection.new_connection_dialog.advanced.receive_maximum')">
+								<NInputNumber v-model:value="data.properties.receiveMaximum" :min="1" clearable />
+							</NFormItemGridItem>
+							<NFormItemGridItem span="2" :label="t('connection.new_connection_dialog.advanced.maximum_packet_size')">
+								<NInputNumber v-model:value="data.properties.maximumPacketSize" :min="100" clearable />
+							</NFormItemGridItem>
+							<NFormItemGridItem span="2" :label="t('connection.new_connection_dialog.advanced.topic_alias_maximum')">
+								<NInputNumber v-model:value="data.properties.topicAliasMaximum" :min="1" clearable />
+							</NFormItemGridItem>
+							<NFormItemGridItem :label="t('connection.new_connection_dialog.advanced.request_response_info')">
+								<NSwitch v-model:value="data.properties.requestResponseInformation" />
+							</NFormItemGridItem>
+							<NFormItemGridItem :label="t('connection.new_connection_dialog.advanced.request_problem_info')">
+								<NSwitch v-model:value="data.properties.requestProblemInformation" />
+							</NFormItemGridItem>
+							<NFormItemGridItem span="4" :label="t('connection.new_connection_dialog.advanced.user_properties')">
+								<NDynamicInput v-model:value="userProperties" @create="handleUserPropertiesCreate">
+									<template #default="{ value }">
+										<NInputGroup>
+											<NInput
+												v-model:value="value.key"
+												:placeholder="t('connection.new_connection_dialog.advanced.key')"
+												clearable
+											/>
+											<NInput
+												v-model:value="value.value"
+												:placeholder="t('connection.new_connection_dialog.advanced.value')"
+												clearable
+											/>
+										</NInputGroup>
+									</template>
+								</NDynamicInput>
+							</NFormItemGridItem>
+						</NGrid>
 					</NCollapseItem>
 					<NCollapseItem
 						:title="t('connection.new_connection_dialog.last_will_and_testament.title')"
 						name="lastWillAndTestament"
 					>
-						<NFormItem :label="t('connection.new_connection_dialog.last_will_and_testament.topic')">
-							<NInput v-model:value="data.will.topic" clearable />
-						</NFormItem>
-						<NFormItem :label="t('connection.new_connection_dialog.last_will_and_testament.qos')">
-							<QosSelect v-model:value="data.will.qos" />
-						</NFormItem>
-						<NFormItem :label="t('connection.new_connection_dialog.last_will_and_testament.retain')">
-							<NSwitch v-model:value="data.will.retain" />
-						</NFormItem>
-						<NFormItem :label="t('connection.new_connection_dialog.last_will_and_testament.payload')">
-							<Editor class="payload-editor" v-model:value="data.will.payload as unknown as string" />
-						</NFormItem>
-						<NFormItem
-							:label="t('connection.new_connection_dialog.last_will_and_testament.payload_format_indicator')"
-							v-show="isMqtt5"
-						>
-							<NSwitch v-model:value="data.will.properties.payloadFormatIndicator" />
-						</NFormItem>
-						<NFormItem
-							:label="t('connection.new_connection_dialog.last_will_and_testament.will_delay_interval')"
-							v-show="isMqtt5"
-						>
-							<NInputNumber v-model:value="data.will.properties.willDelayInterval" :min="0" clearable>
-								<template #suffix>{{ t('common.seconds') }}</template>
-							</NInputNumber>
-						</NFormItem>
-						<NFormItem
-							:label="t('connection.new_connection_dialog.last_will_and_testament.message_expiry_interval')"
-							v-show="isMqtt5"
-						>
-							<NInputNumber v-model:value="data.will.properties.messageExpiryInterval" :min="0" clearable>
-								<template #suffix>{{ t('common.seconds') }}</template>
-							</NInputNumber>
-						</NFormItem>
-						<NFormItem
-							:label="t('connection.new_connection_dialog.last_will_and_testament.content_type')"
-							v-show="isMqtt5"
-						>
-							<NInput v-model:value="data.will.properties.contentType" clearable />
-						</NFormItem>
-						<NFormItem
-							:label="t('connection.new_connection_dialog.last_will_and_testament.response_topic')"
-							v-show="isMqtt5"
-						>
-							<NInput v-model:value="data.will.properties.responseTopic" clearable />
-						</NFormItem>
-						<NFormItem
-							:label="t('connection.new_connection_dialog.last_will_and_testament.correlation_data')"
-							v-show="isMqtt5"
-						>
-							<NInput v-model:value="data.will.properties.correlationData as unknown as string" clearable />
-						</NFormItem>
+						<NGrid :cols="4" x-gap="24">
+							<NFormItemGridItem span="2" :label="t('connection.new_connection_dialog.last_will_and_testament.topic')">
+								<NInput v-model:value="data.will.topic" clearable />
+							</NFormItemGridItem>
+							<NFormItemGridItem span="2" :label="t('connection.new_connection_dialog.last_will_and_testament.qos')">
+								<QosSelect v-model:value="data.will.qos" />
+							</NFormItemGridItem>
+							<NFormItemGridItem :label="t('connection.new_connection_dialog.last_will_and_testament.retain')">
+								<NSwitch v-model:value="data.will.retain" />
+							</NFormItemGridItem>
+							<NFormItemGridItem
+								:label="t('connection.new_connection_dialog.last_will_and_testament.payload_format_indicator')"
+								v-show="isMqtt5"
+							>
+								<NSwitch v-model:value="data.will.properties.payloadFormatIndicator" />
+							</NFormItemGridItem>
+							<NFormItemGridItem
+								span="2"
+								:label="t('connection.new_connection_dialog.last_will_and_testament.content_type')"
+								v-show="isMqtt5"
+							>
+								<NInput v-model:value="data.will.properties.contentType" clearable />
+							</NFormItemGridItem>
+							<NFormItemGridItem
+								span="4"
+								:label="t('connection.new_connection_dialog.last_will_and_testament.payload')"
+							>
+								<Editor class="payload-editor" v-model:value="data.will.payload as unknown as string" />
+							</NFormItemGridItem>
+							<NFormItemGridItem
+								span="2"
+								:label="t('connection.new_connection_dialog.last_will_and_testament.will_delay_interval')"
+								v-show="isMqtt5"
+							>
+								<NInputNumber v-model:value="data.will.properties.willDelayInterval" :min="0" clearable>
+									<template #suffix>{{ t('common.seconds') }}</template>
+								</NInputNumber>
+							</NFormItemGridItem>
+							<NFormItemGridItem
+								span="2"
+								:label="t('connection.new_connection_dialog.last_will_and_testament.message_expiry_interval')"
+								v-show="isMqtt5"
+							>
+								<NInputNumber v-model:value="data.will.properties.messageExpiryInterval" :min="0" clearable>
+									<template #suffix>{{ t('common.seconds') }}</template>
+								</NInputNumber>
+							</NFormItemGridItem>
+							<NFormItemGridItem
+								span="2"
+								:label="t('connection.new_connection_dialog.last_will_and_testament.response_topic')"
+								v-show="isMqtt5"
+							>
+								<NInput v-model:value="data.will.properties.responseTopic" clearable />
+							</NFormItemGridItem>
+							<NFormItemGridItem
+								span="2"
+								:label="t('connection.new_connection_dialog.last_will_and_testament.correlation_data')"
+								v-show="isMqtt5"
+							>
+								<NInput v-model:value="data.will.properties.correlationData as unknown as string" clearable />
+							</NFormItemGridItem>
+						</NGrid>
 					</NCollapseItem>
 				</NCollapse>
 			</NForm>
@@ -535,6 +563,8 @@ async function submit() {
 
 .payload-editor {
 	height: 400px;
-	width: 500px;
+	border-radius: var(--border-radius);
+	border: 1px solid var(--border-color);
+	overflow: hidden;
 }
 </style>

@@ -40,6 +40,27 @@ function handleFooterDrag({ clientY }: MouseEvent) {
 				<Icon height="18" width="18" icon="tabler:chevron-down" />
 			</button>
 			<div class="footer_drag" @mousedown="handleFooterDrag" />
+			<div class="footer_header">
+				<NInput size="small" />
+				<QosSelect size="small" style="width: 150px; min-width: 150px" />
+				<NButton size="small" tertiary>
+					<template #icon>
+						<Icon icon="tabler:check" color="var(--success-color)" />
+					</template>
+					保留消息
+				</NButton>
+				<NButton size="small" tertiary>
+					<template #icon>
+						<Icon height="14" width="14" icon="tabler:dots-vertical" />
+					</template>
+				</NButton>
+			</div>
+			<Editor class="footer_body" />
+			<NButton class="footer_send" type="primary" circle>
+				<template #icon>
+					<Icon icon="tabler:send-2" />
+				</template>
+			</NButton>
 		</div>
 	</div>
 </template>
@@ -54,15 +75,17 @@ function handleFooterDrag({ clientY }: MouseEvent) {
 
 .body {
 	flex: 1;
+	background-color: var(--button-color-2);
 }
 
 .footer {
+	display: flex;
+	flex-direction: column;
 	position: relative;
 	height: v-bind(footerHeight);
 	max-height: v-bind(footerHeight);
 	border-top: 1px solid var(--border-color);
 	transition: all 0.2s var(--cubic-bezier-ease-in-out);
-	padding: 8px;
 	z-index: 1;
 
 	&[collapse='true'] {
@@ -95,7 +118,7 @@ function handleFooterDrag({ clientY }: MouseEvent) {
 		z-index: 2;
 
 		&[collapse='true'] {
-			transform: translate(-50%, -100%);
+			transform: translate(-50%, calc(0px - 100% - 16px));
 
 			svg {
 				transform: rotate(180deg);
@@ -137,6 +160,35 @@ function handleFooterDrag({ clientY }: MouseEvent) {
 		&:hover {
 			background-color: var(--primary-color);
 		}
+	}
+
+	&_header {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		padding: 4px 8px;
+		border-bottom: 1px solid var(--border-color);
+
+		:deep(.n-input),
+		:deep(.n-base-selection-label) {
+			background-color: var(--button-color-2);
+		}
+
+		:deep(.n-input__border),
+		:deep(.n-base-selection__border) {
+			border: none;
+		}
+	}
+
+	&_body {
+		flex: 1;
+	}
+
+	&_send {
+		position: absolute;
+		right: 8px;
+		bottom: 38px;
+		box-shadow: var(--box-shadow-1);
 	}
 }
 </style>

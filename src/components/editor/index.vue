@@ -35,7 +35,8 @@ function init() {
 		language: language.value,
 		renderLineHighlight: 'none',
 		fontFamily: 'JetBrainsMono-Regular, HarmonyOS_Sans_Regular',
-		fontSize: 14,
+		fontSize: 13,
+		fixedOverflowWidgets: true,
 		overviewRulerBorder: false,
 		scrollbar: {
 			horizontalScrollbarSize: 10,
@@ -110,13 +111,12 @@ const languageOptions = computed(() => languages.map(item => ({ label: item, val
 	width: 100%;
 	display: flex;
 	flex-direction: column;
-	border-radius: var(--border-radius);
-	border: 1px solid var(--border-color);
 	overflow: hidden;
 }
 
 .body {
 	flex: 1;
+	overflow: hidden;
 }
 
 .footer {

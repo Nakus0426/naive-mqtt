@@ -213,6 +213,13 @@
 	}
 
 	// Monaco Editor
+	.monaco-editor {
+		--vscode-editorGutter-background: var(--button-color-2);
+		--vscode-editor-background: var(--button-color-2);
+		outline-color: transparent;
+		background-color: transparent;
+	}
+
 	.monaco-scrollable-element > .scrollbar > .slider {
 		border-radius: 2px;
 		background: var(--scrollbar-color);

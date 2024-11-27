@@ -15,6 +15,7 @@ export const customDarkThemeOverrides: GlobalThemeOverrides = {
 		fontSizeMedium: '14px',
 		fontSizeLarge: '16px',
 		lineHeight: '1.5',
+		buttonColor2: '#1E1E1E',
 	},
 	Popover: {
 		padding: '8px',

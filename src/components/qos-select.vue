@@ -6,11 +6,11 @@ import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n<{ message: MessageSchema }>()
 
-const options: Array<SelectOption> = [
+const options = computed<Array<SelectOption>>(() => [
 	{ label: '0', extra: t('common.qos_0'), value: 0 },
 	{ label: '1', extra: t('common.qos_1'), value: 1 },
 	{ label: '2', extra: t('common.qos_2'), value: 2 },
-]
+])
 
 const renderLabel: RenderLabel = ({ label, extra }) => (
 	<NFlex justify="space-between" style="width: 100%;">
@@ -21,7 +21,7 @@ const renderLabel: RenderLabel = ({ label, extra }) => (
 </script>
 
 <template>
-	<NSelect :options v-bind="$attrs" :render-label />
+	<NSelect :options v-bind="$attrs" :render-label :consistent-menu-width="false" />
 </template>
 
 <style scoped lang="scss"></style>

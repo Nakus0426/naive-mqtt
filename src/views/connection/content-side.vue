@@ -121,7 +121,7 @@ const treeLabelRender: RenderLabel = ({ option }) => {
 }
 const treeSwitcherIconRender: RenderSwitcherIcon = () => <Icon icon="tabler:chevron-right" />
 const treeOverrideDefaultNodeClickBehavior: TreeOverrideNodeClickBehavior = ({ option }) => {
-	return option.isLeaf ? 'default' : 'toggleExpand'
+	return option.isLeaf ? (connected.value ? 'default' : 'none') : 'toggleExpand'
 }
 function generateTreeNodePrefix(node: Subscription) {
 	return (
