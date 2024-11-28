@@ -14,17 +14,20 @@ import {
 	type OnUpdateValueImpl as OnDropdownSelect,
 	type RenderOptionImpl as DropdownOptionRender,
 } from 'naive-ui/es/dropdown/src/interface'
-import { type Connection, EditTypeEnum, useConnectionsStore } from '@/store/modules/connections'
-import { type OnUpdateSelectedKeysImpl as OnTreeSelect } from 'naive-ui/es/tree/src/Tree'
 import { type FormValidationStatus } from 'naive-ui/es/form/src/interface'
+import { type Connection, EditTypeEnum, useConnectionsStore } from '@/store/modules/connections'
 import { nanoid } from 'nanoid'
 import { isNotNil } from 'es-toolkit'
 import { useConnection } from './use-connection'
 
-const emit = defineEmits<{ selectUpdate: [string]; delete: [string] }>()
 const { t } = useI18n<{ message: MessageSchema }>()
 const connectionsStore = useConnectionsStore()
-const { newConnectionDialogEventHook, connectionDeleteConfirmEventHook } = useConnection()
+const {
+	selectedClientId,
+	newConnectionDialogEventHook,
+	connectionDeleteConfirmEventHook,
+	connectionSelectedUpdateEventHook,
+} = useConnection()
 
 //#region 宽度
 const sideWidth = computed(() => `${connectionsStore.sideWidth}px`)
@@ -121,8 +124,8 @@ function handleGroupNameCancel(editType: EditTypeEnum, clientId: Connection['cli
 //#endregion
 
 //#region 连接树渲染
-const tree = computed<Array<TreeOption>>(() => {
-	return connectionsStore.connectionTree.map(node => ({
+const tree = computed<Array<TreeOption>>(() =>
+	connectionsStore.connectionTree.map(node => ({
 		key: node.clientId,
 		label: node.name,
 		isLeaf: !node.isGroup,
@@ -137,8 +140,8 @@ const tree = computed<Array<TreeOption>>(() => {
 			data: child,
 		})),
 		data: node,
-	}))
-})
+	})),
+)
 const treeLabelRender: RenderLabel = ({ option }) =>
 	isNotNil(option.data?.['editType']) ? (
 		<GroupNameInput clientId={option.data['clientId']} editType={option.data['editType']} />
@@ -311,10 +314,6 @@ function findSiblings(
 	return [null, null]
 }
 //#endregion
-
-const handleTreeSelect: OnTreeSelect = value => {
-	emit('selectUpdate', value[0] as string)
-}
 </script>
 
 <template>
@@ -357,8 +356,9 @@ const handleTreeSelect: OnTreeSelect = value => {
 				:override-default-node-click-behavior="treeOverrideDefaultNodeClickBehavior"
 				:node-props="treeNodeProps"
 				:cancelable="false"
+				:selected-keys="[selectedClientId]"
 				@drop="handleTreeDrag"
-				@update:selected-keys="handleTreeSelect"
+				@update:selected-keys="value => connectionSelectedUpdateEventHook.trigger(value[0])"
 			/>
 		</div>
 		<NDropdown

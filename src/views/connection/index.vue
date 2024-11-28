@@ -7,17 +7,16 @@ import { useConnection, useProvideConnection } from './use-connection'
 import NewConnectionDialog from './new-connection-dialog.vue'
 
 useProvideConnection()
-const { selectedClientId, connectionDeleteEventHook } = useConnection()
+const { selectedClientId, connectionDeleteEventHook, connectionSelectedUpdateEventHook } = useConnection()
 
 //#region 连接选中状态
 const contentComponentMap = ref(new Map<Connection['clientId'], typeof Content>())
 const contentRef = useTemplateRef('content')
-
-function handleConnectionSelectUpdate(clientId: Connection['clientId']) {
+connectionSelectedUpdateEventHook.on(clientId => {
 	selectedClientId.value = clientId
 	if (!contentComponentMap.value.has(clientId))
 		contentComponentMap.value.set(clientId, markRaw(<Content clientId={clientId} />))
-}
+})
 
 connectionDeleteEventHook.on(clientId => {
 	selectedClientId.value = null
@@ -29,7 +28,7 @@ connectionDeleteEventHook.on(clientId => {
 
 <template>
 	<div class="connection">
-		<Side @select-update="handleConnectionSelectUpdate" />
+		<Side />
 		<div class="content" ref="content">
 			<TransitionGroup name="next-from-left">
 				<component

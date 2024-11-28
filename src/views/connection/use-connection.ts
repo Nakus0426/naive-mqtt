@@ -11,6 +11,7 @@ const [useProvideConnection, useConnection] = createInjectionState(() => {
 
 	const newConnectionDialogEventHook = createEventHook<{ type: 'new' | 'edit'; clientId?: Connection['clientId'] }>()
 
+	//#region 连接删除确认弹窗
 	const connectionDeleteConfirmEventHook = createEventHook<Connection['clientId']>()
 	const connectionDeleteEventHook = createEventHook<Connection['clientId']>()
 	connectionDeleteConfirmEventHook.on(clientId => {
@@ -37,8 +38,16 @@ const [useProvideConnection, useConnection] = createInjectionState(() => {
 			},
 		})
 	})
+	//#endregion
 
-	return { selectedClientId, newConnectionDialogEventHook, connectionDeleteConfirmEventHook, connectionDeleteEventHook }
+	const connectionSelectedUpdateEventHook = createEventHook<Connection['clientId']>()
+	return {
+		selectedClientId,
+		newConnectionDialogEventHook,
+		connectionDeleteConfirmEventHook,
+		connectionDeleteEventHook,
+		connectionSelectedUpdateEventHook,
+	}
 })
 
 export { useProvideConnection, useConnection }

@@ -1,7 +1,8 @@
 <script setup lang="tsx">
 import { type Connection, useConnectionsStore } from '@/store/modules/connections'
-import { type DropdownOption, NText, NTooltip } from 'naive-ui'
+import { type DropdownOption, type SelectGroupOption, NFlex, NText, NTooltip } from 'naive-ui'
 import { type RenderOptionImpl as DropdownOptionRender } from 'naive-ui/es/dropdown/src/interface'
+import { type RenderLabelImpl as PopselectLabelRender } from 'naive-ui/es/_internal/select-menu/src/interface'
 import { Icon } from '@iconify/vue'
 import { nanoid } from 'nanoid'
 import { useProvideContent, useContent } from './use-content'
@@ -14,10 +15,34 @@ import { useConnection } from './use-connection'
 const { clientId } = defineProps<{ clientId?: Connection['clientId'] }>()
 
 useProvideContent(clientId)
-const { connection, group, connected } = useContent()
 const connectionsStore = useConnectionsStore()
-const { newConnectionDialogEventHook, connectionDeleteConfirmEventHook } = useConnection()
+const { connection, group, connected } = useContent()
+const { newConnectionDialogEventHook, connectionDeleteConfirmEventHook, connectionSelectedUpdateEventHook } =
+	useConnection()
 const { t } = useI18n<{ message: MessageSchema }>()
+
+//#region 连接切换下拉选择
+const titlePopselectOptions = computed<Array<SelectGroupOption>>(() =>
+	connectionsStore.connectionTree.map(node => ({
+		value: node.clientId,
+		label: node.name,
+		data: node,
+		type: node.isGroup ? 'group' : undefined,
+		children: node.children.map(child => ({
+			value: child.clientId,
+			label: child.name,
+			data: child,
+		})),
+	})),
+)
+
+const titlePopselectLabelRender: PopselectLabelRender = option => (
+	<NFlex size={4} align="center">
+		<Icon icon={option?.data['isGroup'] ? 'tabler:folder' : 'tabler:layers-linked'} />
+		<span>{option.label}</span>
+	</NFlex>
+)
+//#endregion
 
 //#region 连接/断开
 const connectLoading = ref(false)
@@ -69,13 +94,29 @@ function handleMoreSelect(key: MoreDropdownOptionsKeyEnum) {
 <template>
 	<div class="connection-content">
 		<div class="header">
-			<div class="header_prefix">
-				<template v-if="group">
-					<span class="secondary">{{ group.name }}</span>
-					<span class="secondary">/</span>
-				</template>
-				<span class="primary">{{ connection.name }}</span>
-			</div>
+			<NPopselect
+				:options="titlePopselectOptions"
+				:render-label="titlePopselectLabelRender"
+				:value="clientId"
+				size="small"
+				to=".main"
+				trigger="click"
+				virtual-scroll
+				@update:value="value => connectionSelectedUpdateEventHook.trigger(value)"
+			>
+				<NButton quaternary icon-placement="right">
+					<template #icon>
+						<Icon icon="tabler:chevron-down" color="var(--text-color-3)" />
+					</template>
+					<div class="header_prefix">
+						<template v-if="group">
+							<span class="secondary">{{ group.name }}</span>
+							<span class="secondary">/</span>
+						</template>
+						<span class="primary">{{ connection.name }}</span>
+					</div>
+				</NButton>
+			</NPopselect>
 			<div class="header_suffix">
 				<NTooltip placement="bottom">
 					<template #trigger>
