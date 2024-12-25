@@ -1,7 +1,7 @@
 import { type NativeTheme, type OpenDialogOptions, type OpenDialogReturnValue } from 'electron'
 import { type IClientOptions } from 'mqtt'
 import { type Response } from './main/utils.ts'
-import { type Subscription } from './store/modules/connections.ts'
+import { type PublishData, type Subscription } from './store/modules/connections.ts'
 
 export interface ElectronAPI {
 	updateTheme: (theme: NativeTheme['themeSource']) => void
@@ -13,6 +13,7 @@ export interface ElectronAPI {
 	mqttConnectedBatch: (clientId: Array<IClientOptions['clientId']>) => Map<string, boolean>
 	mqttSubscribe: (subscription: Subscription) => Promise<Response>
 	mqttUnsubscribe: (subscription: Subscription) => Promise<Response>
+	mqttPublish: (data: PublishData) => Promise<Response>
 	mqttOnConnect: (callback: (clientId: IClientOptions['clientId']) => void) => void
 	mqttOnDisconnect: (callback: (clientId: IClientOptions['clientId']) => void) => void
 	mqttOnError: (callback: (message: string) => void) => void

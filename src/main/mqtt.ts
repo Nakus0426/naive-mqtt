@@ -4,7 +4,7 @@ import { Main } from './interface.ts'
 import { response } from './utils.ts'
 import { readFileSync } from 'node:fs'
 import { omitBy, isNil } from 'es-toolkit'
-import { type Subscription } from '@/store/modules/connections.ts'
+import { type PublishData, type Subscription } from '@/store/modules/connections.ts'
 
 const clientPool = new Map<string, MqttClient>()
 
@@ -77,11 +77,10 @@ export function mqtt(mainWindow: BrowserWindow) {
 		try {
 			const client = clientPool.get(subscription.clientId)
 			if (!client) return response(false)
-			const res = await client.subscribeAsync(subscription.topic, generateSubscribeOptions(subscription))
-			console.log(res)
+			await client.subscribeAsync(subscription.topic, generateSubscribeOptions(subscription))
 			return response(true)
-		} catch (err) {
-			return response(false, err.message)
+		} catch ({ message }) {
+			return response(false, message)
 		}
 	})
 
@@ -89,11 +88,21 @@ export function mqtt(mainWindow: BrowserWindow) {
 		try {
 			const client = clientPool.get(subscription.clientId)
 			if (!client) return response(false)
-			const res = await client.unsubscribeAsync(subscription.topic)
-			console.log(res)
+			await client.unsubscribeAsync(subscription.topic)
 			return response(true)
-		} catch (err) {
-			return response(false, err.message)
+		} catch ({ message }) {
+			return response(false, message)
+		}
+	})
+
+	ipcMain.handle(Main.MqttPublish, async (_event, data: PublishData) => {
+		try {
+			const client = clientPool.get(data.clientId)
+			if (!client) return response(false)
+			await client.publishAsync(data.topic, data.message, data.options)
+			return response(true)
+		} catch ({ message }) {
+			return response(false, message)
 		}
 	})
 }

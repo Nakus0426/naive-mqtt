@@ -1,13 +1,11 @@
 import { app, BrowserWindow, ipcMain, nativeTheme, dialog } from 'electron'
+import started from 'electron-squirrel-startup'
 import { createWindow } from './create-window.ts'
 import { store } from './store.ts'
-import { createRequire } from 'node:module'
 import { Main } from './interface.ts'
 import { mqtt } from './mqtt.ts'
 
-const require = createRequire(import.meta.url)
-
-if (require('electron-squirrel-startup')) app.quit()
+if (started) app.quit()
 
 app.on('ready', createMainWindow)
 

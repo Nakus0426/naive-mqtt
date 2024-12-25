@@ -71,6 +71,7 @@
 		"connect_success": "Connected",
 		"disconnect_first": "Please disconnect first",
 		"connect_first": "Please connect first",
+		"retain": "Retain",
 		"new_connection_dialog": {
 			"save_and_connect": "Save and Connect",
 			"save_only": "Save Only",

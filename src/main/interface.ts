@@ -6,6 +6,7 @@ export enum Main {
 	MqttDisconnect = 'disconnect',
 	MqttSubscribe = 'subscribe',
 	MqttUnsubscribe = 'unsubscribe',
+	MqttPublish = 'publish',
 	MqttOnConnect = 'on-connect',
 	MqttOnDisconnect = 'on-disconnect',
 	MqttOnError = 'on-error',

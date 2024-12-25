@@ -1,10 +1,12 @@
 import {
 	type Connection,
+	type PublishData,
+	type Subscription,
 	ConnectionUpdateEventKey,
-	Subscription,
 	SubscriptionUpdateEventKey,
 	useConnectionsStore,
 } from '@/store/modules/connections.ts'
+import { isEmpty } from 'es-toolkit/compat'
 
 const [useProvideContent, useContent] = createInjectionState((clientId: Connection['clientId']) => {
 	const connectionsStore = useConnectionsStore()
@@ -64,7 +66,41 @@ const [useProvideContent, useContent] = createInjectionState((clientId: Connecti
 
 	//#endregion
 
-	return { clientId, connection, group, connected, subscriptionTree, subscriptionStatus, subscribe, unsubscribe }
+	const publishData = ref<PublishData>({
+		clientId: clientId,
+		topic: '',
+		message: '',
+		options: {
+			qos: 0,
+			retain: false,
+		},
+	})
+	const publishDataValidateRes = ref({ topic: true, message: true })
+
+	function publishValidate() {
+		const topic = !isEmpty(publishData.value.topic)
+		const message = !isEmpty(publishData.value.message)
+		publishDataValidateRes.value = { topic, message }
+		return topic && message
+	}
+	function publish() {
+		publishValidate()
+	}
+
+	return {
+		clientId,
+		connection,
+		group,
+		connected,
+		subscriptionTree,
+		subscriptionStatus,
+		publishData,
+		publishDataValidateRes,
+		subscribe,
+		unsubscribe,
+		publishValidate,
+		publish,
+	}
 })
 
 export { useProvideContent, useContent }

@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 	mqttConnectedBatch: (...args) => ipcRenderer.sendSync(Main.MqttConnectedBatch, ...args),
 	mqttSubscribe: (...args) => ipcRenderer.invoke(Main.MqttSubscribe, ...args),
 	mqttUnsubscribe: (...args) => ipcRenderer.invoke(Main.MqttUnsubscribe, ...args),
+	mqttPublish: (...args) => ipcRenderer.invoke(Main.MqttPublish, ...args),
 	mqttOnConnect: (callback: (...args: any[]) => void) =>
 		ipcRenderer.on(Main.MqttOnConnect, (_event, ...args) => callback(...args)),
 	mqttOnDisconnect: (callback: (...args: any[]) => void) =>

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { getItem, removeItem, setItem } from 'localforage'
-import { type IClientSubscribeOptions, type IClientOptions } from 'mqtt'
+import { type IClientSubscribeOptions, type IClientOptions, type IClientPublishOptions } from 'mqtt'
 import { nanoid } from 'nanoid'
 
 const CONNECTIONS_STORAGE_KEY = 'connections'
@@ -34,6 +34,13 @@ export type Subscription = {
 	editType?: EditTypeEnum
 	children?: Array<Subscription>
 } & IClientSubscribeOptions
+
+export type PublishData = {
+	clientId: Connection['clientId']
+	topic: string
+	message: string
+	options?: IClientPublishOptions
+}
 
 /**
  * 连接

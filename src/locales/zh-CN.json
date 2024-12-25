@@ -71,6 +71,7 @@
 		"connect_success": "已连接",
 		"disconnect_first": "请先断开连接",
 		"connect_first": "请先建立连接",
+		"retain": "保留消息",
 		"new_connection_dialog": {
 			"save_and_connect": "保存并连接",
 			"save_only": "仅保存",

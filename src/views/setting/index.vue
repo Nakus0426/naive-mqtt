@@ -75,7 +75,13 @@ function handleLocaleUpdate(value: string) {
 				</div>
 			</CellItem>
 			<CellItem :label="t('setting.appearance.language.title')">
-				<NSelect style="width: 200px" v-model:value="locale" :options="locales" @update:value="handleLocaleUpdate" />
+				<NSelect
+					style="width: 200px"
+					size="small"
+					v-model:value="locale"
+					:options="locales"
+					@update:value="handleLocaleUpdate"
+				/>
 			</CellItem>
 		</Cell>
 	</OverlayScrollbar>

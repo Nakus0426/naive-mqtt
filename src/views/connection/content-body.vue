@@ -1,7 +1,12 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+import { type MessageSchema } from '@/configs/i18n'
 import { useConnectionsStore } from '@/store/modules/connections'
+import { useContent } from './use-content'
 
+const { t } = useI18n<{ message: MessageSchema }>()
 const connectionsStore = useConnectionsStore()
+const { publishData, publishDataValidateRes, publish: publishFunc } = useContent()
 
 //#region footer高度
 const footerHeight = computed(() => `${connectionsStore.contentFooterHeight}px`)
@@ -26,6 +31,12 @@ function handleFooterDrag({ clientY }: MouseEvent) {
 	document.addEventListener('mouseup', endResize)
 }
 //#endregion
+
+//#region 发布消息
+function publish() {
+	publishFunc()
+}
+//#endregion
 </script>
 
 <template>
@@ -41,13 +52,22 @@ function handleFooterDrag({ clientY }: MouseEvent) {
 			</button>
 			<div class="footer_drag" @mousedown="handleFooterDrag" />
 			<div class="footer_header">
-				<NInput size="small" />
-				<QosSelect size="small" style="width: 150px; min-width: 150px" />
-				<NButton size="small" tertiary>
+				<NInput
+					size="small"
+					clearable
+					:placeholder="t('common.input_required', { name: t('connection.new_subscription_dialog.topic') })"
+					v-model:value="publishData.topic"
+					:status="publishDataValidateRes.topic ? undefined : 'error'"
+				/>
+				<QosSelect size="small" style="width: 150px; min-width: 150px" v-model:value="publishData.options.qos" />
+				<NButton size="small" tertiary @click="publishData.options.retain = !publishData.options.retain">
 					<template #icon>
-						<Icon icon="tabler:check" color="var(--success-color)" />
+						<Icon
+							:icon="publishData.options.retain ? 'tabler:check' : 'tabler:cancel'"
+							:color="publishData.options.retain ? 'var(--success-color)' : 'var(--error-color)'"
+						/>
 					</template>
-					保留消息
+					{{ t('connection.retain') }}
 				</NButton>
 				<NButton size="small" tertiary>
 					<template #icon>
@@ -55,8 +75,8 @@ function handleFooterDrag({ clientY }: MouseEvent) {
 					</template>
 				</NButton>
 			</div>
-			<Editor class="footer_body" />
-			<NButton class="footer_send" type="primary" circle>
+			<Editor class="footer_body" v-model:value="publishData.message" :error="!publishDataValidateRes.message" />
+			<NButton class="footer_send" type="primary" circle @click="publish()">
 				<template #icon>
 					<Icon icon="tabler:send-2" />
 				</template>
@@ -182,6 +202,13 @@ function handleFooterDrag({ clientY }: MouseEvent) {
 
 	&_body {
 		flex: 1;
+		border-bottom-right-radius: var(--border-radius);
+		border: 1px solid transparent;
+		transition: all 0.2s var(--cubic-bezier-ease-in-out);
+
+		&[error='true'] {
+			border-color: var(--error-color);
+		}
 	}
 
 	&_send {
