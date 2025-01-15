@@ -71,7 +71,10 @@
 		"connect_success": "已连接",
 		"disconnect_first": "请先断开连接",
 		"connect_first": "请先建立连接",
-		"retain": "保留消息",
+		"publish": "发布",
+		"publish_setting": "发布设置",
+		"message_type": "消息类型",
+		"decode_message_by": "解码消息的格式",
 		"new_connection_dialog": {
 			"save_and_connect": "保存并连接",
 			"save_only": "仅保存",
@@ -117,7 +120,7 @@
 				"title": "遗嘱消息",
 				"topic": "主题",
 				"qos": "QoS",
-				"retain": "保留标志",
+				"retain": "保留",
 				"payload": "内容",
 				"payload_format_indicator": "有效载荷指示器",
 				"will_delay_interval": "延迟时间",
@@ -135,6 +138,16 @@
 			"no_local_flag": "禁止本地转发",
 			"retain_as_published_flag": "发布时保留状态",
 			"retain_handling": "保留消息处理"
+		},
+		"publish_setting_dialog": {
+			"dup": "重复",
+			"subscription_identifier": "订阅标识符",
+			"topic_alias": "主题别名"
+		},
+		"message_type_options": {
+			"all": "全部",
+			"published": "已发布",
+			"received": "已接收"
 		}
 	}
 }

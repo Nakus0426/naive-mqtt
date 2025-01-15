@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, nativeTheme, dialog } from 'electron'
+import { app, BrowserWindow, ipcMain, nativeTheme, dialog, systemPreferences } from 'electron'
 import started from 'electron-squirrel-startup'
 import { createWindow } from './create-window.ts'
 import { store } from './store.ts'
@@ -43,3 +43,5 @@ ipcMain.handle(Main.OpenFileDialog, async (event, options) => {
 	const { filePaths } = await dialog.showOpenDialog(mainWindow, options)
 	return filePaths
 })
+
+ipcMain.on(Main.GetAccentColor, event => (event.returnValue = systemPreferences.getAccentColor()))

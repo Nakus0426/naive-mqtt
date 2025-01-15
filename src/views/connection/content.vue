@@ -83,6 +83,7 @@ const dropdownOptionRender: DropdownOptionRender = ({ node, option }) => (
 		{{ trigger: () => node, default: () => t('connection.disconnect_first') }}
 	</NTooltip>
 )
+const moreDropdownVisible = ref(false)
 
 function handleMoreSelect(key: MoreDropdownOptionsKeyEnum) {
 	if (key === MoreDropdownOptionsKeyEnum.Edit) newConnectionDialogEventHook.trigger({ type: 'edit', clientId })
@@ -135,15 +136,16 @@ function handleMoreSelect(key: MoreDropdownOptionsKeyEnum) {
 					{{ t(`common.${connected ? 'disconnect' : 'connect'}`) }}
 				</NTooltip>
 				<NDropdown
-					:options="moreDropdownOptions"
-					:render-option="dropdownOptionRender"
 					trigger="click"
 					size="small"
 					placement="bottom-end"
 					to=".main"
+					v-model:show="moreDropdownVisible"
+					:options="moreDropdownOptions"
+					:render-option="dropdownOptionRender"
 					@select="handleMoreSelect"
 				>
-					<NTooltip placement="bottom">
+					<NTooltip placement="bottom" :disabled="moreDropdownVisible">
 						<template #trigger>
 							<NButton size="small" quaternary>
 								<template #icon>
@@ -156,10 +158,10 @@ function handleMoreSelect(key: MoreDropdownOptionsKeyEnum) {
 				</NDropdown>
 			</div>
 		</div>
-		<OverlayScrollbar class="body">
+		<div class="body">
 			<ContentSide />
 			<ContentBody />
-		</OverlayScrollbar>
+		</div>
 	</div>
 </template>
 
@@ -173,6 +175,7 @@ function handleMoreSelect(key: MoreDropdownOptionsKeyEnum) {
 	width: 100%;
 	display: flex;
 	flex-direction: column;
+	gap: 4px;
 	overflow: hidden;
 }
 
@@ -183,7 +186,9 @@ function handleMoreSelect(key: MoreDropdownOptionsKeyEnum) {
 	align-items: center;
 	justify-content: space-between;
 	padding: 0 8px;
-	border-bottom: 1px solid var(--border-color);
+	background-color: var(--card-color);
+	border-radius: var(--border-radius);
+	border: 1px solid var(--border-color);
 
 	&_prefix {
 		display: flex;
@@ -210,5 +215,7 @@ function handleMoreSelect(key: MoreDropdownOptionsKeyEnum) {
 .body {
 	flex: 1;
 	display: flex;
+	gap: 4px;
+	overflow: hidden;
 }
 </style>

@@ -41,7 +41,7 @@ connectionDeleteEventHook.on(clientId => {
 					height="64"
 					width="64"
 					icon="custom:logo-plain"
-					color="var(--tag-color)"
+					color="var(--primary-color-suppl)"
 					key="logo"
 					v-if="!selectedClientId"
 				/>
@@ -56,6 +56,7 @@ connectionDeleteEventHook.on(clientId => {
 	height: 100%;
 	width: 100%;
 	display: flex;
+	gap: 4px;
 }
 
 .content {

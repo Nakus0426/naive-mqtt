@@ -12,8 +12,8 @@ const [useProvideContent, useContent] = createInjectionState((clientId: Connecti
 	const connectionsStore = useConnectionsStore()
 
 	//#region 连接
-	const connection = ref()
-	const group = ref()
+	const connection = ref<Connection>()
+	const group = ref<Connection>()
 	const connected = computed(() => connectionsStore.connectionStatus.get(clientId))
 
 	function updateConnection() {
@@ -66,6 +66,7 @@ const [useProvideContent, useContent] = createInjectionState((clientId: Connecti
 
 	//#endregion
 
+	//#region 发布
 	const publishData = ref<PublishData>({
 		clientId: clientId,
 		topic: '',
@@ -73,6 +74,17 @@ const [useProvideContent, useContent] = createInjectionState((clientId: Connecti
 		options: {
 			qos: 0,
 			retain: false,
+			dup: false,
+			properties: {
+				payloadFormatIndicator: undefined,
+				messageExpiryInterval: undefined,
+				topicAlias: undefined,
+				responseTopic: undefined,
+				correlationData: undefined,
+				userProperties: {},
+				subscriptionIdentifier: undefined,
+				contentType: undefined,
+			},
 		},
 	})
 	const publishDataValidateRes = ref({ topic: true, message: true })
@@ -86,6 +98,7 @@ const [useProvideContent, useContent] = createInjectionState((clientId: Connecti
 	function publish() {
 		publishValidate()
 	}
+	//#endregion
 
 	return {
 		clientId,

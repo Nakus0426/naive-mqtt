@@ -5,12 +5,14 @@ import { editor } from 'monaco-editor'
 import { useAppStore } from '@/store/modules/app'
 import { useI18n } from 'vue-i18n'
 import { type MessageSchema } from '@/configs/i18n'
+import { upperFirst } from 'es-toolkit'
+import { Language } from './types'
 
-const { languages = ['plaintext', 'json'], value } = defineProps<{
+const { languages = [Language.PlainText, Language.Json], value } = defineProps<{
 	value?: string
-	languages?: Array<string>
+	languages?: Array<Language>
 }>()
-const language = defineModel<'plaintext' | 'json'>({ default: 'plaintext' })
+const language = defineModel<Language>({ default: Language.PlainText })
 const emit = defineEmits<{ 'update:value': [string] }>()
 const appStore = useAppStore()
 const { t } = useI18n<{ message: MessageSchema }>()
@@ -80,7 +82,7 @@ function updateCursorPosition({ selection }: editor.ICursorSelectionChangedEvent
 }
 //#endregion
 
-const languageOptions = computed(() => languages.map(item => ({ label: item, value: item })))
+const languageOptions = computed(() => languages.map(item => ({ label: upperFirst(item), value: item })))
 </script>
 
 <template>
@@ -97,8 +99,14 @@ const languageOptions = computed(() => languages.map(item => ({ label: item, val
 				</div>
 			</div>
 			<div class="footer_suffix">
-				<NPopselect v-model:value="language" :options="languageOptions" size="small" placement="top-end">
-					<NButton size="tiny" quaternary>{{ language }}</NButton>
+				<NPopselect
+					v-model:value="language"
+					size="small"
+					placement="top-end"
+					trigger="click"
+					:options="languageOptions"
+				>
+					<NButton size="tiny" quaternary>{{ upperFirst(language) }}</NButton>
 				</NPopselect>
 			</div>
 		</div>

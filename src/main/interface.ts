@@ -2,6 +2,7 @@ export enum Main {
 	UpdateTheme = 'update-theme',
 	GetTheme = 'get-theme',
 	GetLocale = 'get-locale',
+	GetAccentColor = 'get-accent-color',
 	MqttConnect = 'connect',
 	MqttDisconnect = 'disconnect',
 	MqttSubscribe = 'subscribe',

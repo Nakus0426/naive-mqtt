@@ -181,10 +181,6 @@ function handleRouteChange(to: RouteRecordRaw) {
 	display: flex;
 	flex-direction: column;
 	margin: 0px 6px 6px 0px;
-	border: 1px solid var(--border-color);
-	border-radius: var(--border-radius);
-	background-color: var(--card-color);
-	box-shadow: 1px 1px 3px 0px var(--divider-color);
 	overflow: hidden;
 	-webkit-app-region: no-drag;
 }

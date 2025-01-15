@@ -426,12 +426,14 @@ function findNode(tree: Array<Subscription>, id: Subscription['id']) {
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
-	border-right: 1px solid var(--border-color);
 	padding: 8px 8px 0 8px;
+	background-color: var(--card-color);
+	border-radius: var(--border-radius);
+	border: 1px solid var(--border-color);
 
 	&_drag {
 		position: absolute;
-		right: -2px;
+		right: -4.5px;
 		top: 0;
 		bottom: 0;
 		width: 4px;

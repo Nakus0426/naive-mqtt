@@ -430,6 +430,20 @@ async function submit() {
 											/>
 										</NInputGroup>
 									</template>
+									<template #action="{ create, remove, index }">
+										<NButtonGroup class="user-properties_action" size="small">
+											<NButton type="success" tertiary @click="create(index)">
+												<template #icon>
+													<Icon icon="tabler:plus" />
+												</template>
+											</NButton>
+											<NButton type="error" tertiary @click="remove(index)">
+												<template #icon>
+													<Icon icon="tabler:trash" />
+												</template>
+											</NButton>
+										</NButtonGroup>
+									</template>
 								</NDynamicInput>
 							</NFormItemGridItem>
 						</NGrid>
@@ -566,5 +580,9 @@ async function submit() {
 	border-radius: var(--border-radius);
 	border: 1px solid var(--border-color);
 	overflow: hidden;
+}
+
+.user-properties_action {
+	margin-left: 10px;
 }
 </style>

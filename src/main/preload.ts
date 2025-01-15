@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 	updateTheme: (...args) => ipcRenderer.send(Main.UpdateTheme, ...args),
 	getTheme: (...args) => ipcRenderer.sendSync(Main.GetTheme, ...args),
 	getLocale: (...args) => ipcRenderer.sendSync(Main.GetLocale, ...args),
+	getAccentColor: (...args) => ipcRenderer.sendSync(Main.GetAccentColor, ...args),
 	mqttConnect: (...args) => ipcRenderer.invoke(Main.MqttConnect, ...args),
 	mqttDisconnect: (...args) => ipcRenderer.invoke(Main.MqttDisconnect, ...args),
 	mqttConnected: (...args) => ipcRenderer.sendSync(Main.MqttConnected, ...args),

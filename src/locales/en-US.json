@@ -71,7 +71,10 @@
 		"connect_success": "Connected",
 		"disconnect_first": "Please disconnect first",
 		"connect_first": "Please connect first",
-		"retain": "Retain",
+		"publish": "Publish",
+		"publish_setting": "Publish Setting",
+		"message_type": "Message Type",
+		"decode_message_by": "Decode Message By",
 		"new_connection_dialog": {
 			"save_and_connect": "Save and Connect",
 			"save_only": "Save Only",
@@ -134,6 +137,16 @@
 			"color": "Color",
 			"no_local_flag": "No Local Flag",
 			"retain_as_published_flag": "Retain as Published Flag"
+		},
+		"publish_setting_dialog": {
+			"dup": "Duplicate",
+			"subscription_identifier": "Subscription Identifier",
+			"topic_alias": "Topic Alias"
+		},
+		"message_type_options": {
+			"all": "All",
+			"published": "Published",
+			"received": "Received"
 		}
 	}
 }

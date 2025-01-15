@@ -52,6 +52,10 @@
 	// Select
 	.n-base-select {
 		&-option {
+			&::before {
+				border-radius: calc(var(--n-border-radius) - 4px);
+			}
+
 			&__content {
 				flex: 1;
 			}
@@ -60,6 +64,8 @@
 
 	// Input
 	.n-input {
+		height: fit-content;
+
 		&__prefix,
 		&__suffix {
 			gap: 5px;
@@ -93,6 +99,11 @@
 	.n-dropdown {
 		&-menu {
 			border: 1px solid var(--border-color);
+		}
+
+		&-divider {
+			margin: 4px 8px;
+			transform: scaleY(0.5);
 		}
 
 		&-option-body {
@@ -214,8 +225,6 @@
 
 	// Monaco Editor
 	.monaco-editor {
-		--vscode-editorGutter-background: var(--button-color-2);
-		--vscode-editor-background: var(--button-color-2);
 		outline-color: transparent;
 		background-color: transparent;
 	}
@@ -230,6 +239,17 @@
 			background: var(--scrollbar-color-hover);
 		}
 	}
+
+	// Shiki
+	.shiki {
+		background-color: transparent !important;
+		margin: 0;
+
+		span {
+			font-family: 'JetBrainsMono-Regular', 'HarmonyOS_Sans_Regular';
+			font-size: var(--font-size);
+		}
+	}
 }
 
 // 深色主题
@@ -241,6 +261,13 @@
 	.n-dialog {
 		&__action {
 			background-color: rgba(255, 255, 255, 0.06);
+		}
+	}
+
+	// Shiki
+	.shiki {
+		span {
+			color: var(--shiki-dark) !important;
 		}
 	}
 }

@@ -1,12 +1,20 @@
 import { GlobalThemeOverrides } from 'naive-ui'
+import Color from 'color'
+
+const accentColor = new Color(`#${window.electronAPI.getAccentColor()}`)
+const primaryColor = accentColor.hex()
+const lightenPrimaryColor = accentColor.lighten(0.2).hex()
+const darkenPrimaryColor = accentColor.darken(0.2).hex()
 
 export const customLightThemeOverrides: GlobalThemeOverrides = {
 	common: {
+		primaryColor,
+		primaryColorHover: lightenPrimaryColor,
+		primaryColorPressed: darkenPrimaryColor,
+		primaryColorSuppl: lightenPrimaryColor,
 		fontFamily: 'HarmonyOS_Sans_Regular',
 		borderRadius: '8px',
 		borderRadiusSmall: '4px',
-		borderColor: '#E9E9E9',
-		dividerColor: '#E0E6EA',
 		bodyColor: '#F8F8F8',
 		fontSizeSmall: '12px',
 		fontSizeMedium: '14px',

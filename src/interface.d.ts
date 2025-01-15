@@ -7,6 +7,7 @@ export interface ElectronAPI {
 	updateTheme: (theme: NativeTheme['themeSource']) => void
 	getTheme: () => NativeTheme['themeSource']
 	getLocale: () => string
+	getAccentColor: () => string
 	mqttConnect: (options: IClientOptions) => Promise<Response>
 	mqttDisconnect: (clientId: IClientOptions['clientId']) => Promise<Response>
 	mqttConnected: (clientId: IClientOptions['clientId']) => boolean

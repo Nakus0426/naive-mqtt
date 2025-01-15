@@ -1,15 +1,7 @@
-:root[color-scheme='light'] {
-	--primary-color-light: rgba(24, 160, 88, 0.16);
-	--success-color-light: rgba(24, 160, 88, 0.16);
-	--info-color-light: rgba(32, 128, 240, 0.16);
-	--warning-color-light: rgba(240, 160, 32, 0.16);
-	--error-color-light: rgba(208, 48, 80, 0.16);
-}
-
-:root[color-scheme='dark'] {
-	--primary-color-light: rgba(24, 160, 88, 0.16);
-	--success-color-light: rgba(24, 160, 88, 0.16);
-	--info-color-light: rgba(32, 128, 240, 0.16);
-	--warning-color-light: rgba(240, 160, 32, 0.16);
-	--error-color-light: rgba(208, 48, 80, 0.16);
+.main {
+	--primary-color-light: rgb(from var(--primary-color) r g b / 0.16);
+	--success-color-light: rgb(from var(--success-color) r g b / 0.16);
+	--info-color-light: rgb(from var(--info-color) r g b / 0.16);
+	--warning-color-light: rgb(from var(--warning-color) r g b / 0.16);
+	--error-color-light: rgb(from var(--error-color) r g b / 0.16);
 }

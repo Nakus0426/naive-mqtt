@@ -91,6 +91,9 @@ function handleLocaleUpdate(value: string) {
 .setting {
 	height: 100%;
 	width: 100%;
+	background-color: var(--card-color);
+	border-radius: var(--border-radius);
+	border: 1px solid var(--border-color);
 }
 
 .header {

@@ -1,12 +1,57 @@
-<script setup lang="ts">
+<script setup lang="tsx">
 import { useI18n } from 'vue-i18n'
 import { type MessageSchema } from '@/configs/i18n'
 import { useConnectionsStore } from '@/store/modules/connections'
 import { useContent } from './use-content'
+import PublishSetting from './publish-setting.vue'
+import Message from './message.vue'
+import { NFlex, NPopselect, type SelectOption } from 'naive-ui'
+import { type RenderLabelImpl as SelectMenuLabelRender } from 'naive-ui/es/_internal/select-menu/src/interface'
+import { Icon } from '@iconify/vue'
 
 const { t } = useI18n<{ message: MessageSchema }>()
 const connectionsStore = useConnectionsStore()
 const { publishData, publishDataValidateRes, publish: publishFunc } = useContent()
+
+enum DecodeMessageByEnum {
+	Plaintext = 'Plaintext',
+	JSON = 'Json',
+	Base64 = 'Base64',
+	Hex = 'Hex',
+	CBOR = 'CBOR',
+	MsgPack = 'MsgPack',
+}
+const decodeMessageByPopselectOptions = computed<Array<SelectOption>>(() =>
+	Object.keys(DecodeMessageByEnum).map(key => ({ label: key, value: DecodeMessageByEnum[key] })),
+)
+const decodeMessageBy = ref(DecodeMessageByEnum.Plaintext)
+const decodeMessageByPopselectVisible = ref(false)
+
+//#region 消息类型
+enum MessageTypeEnum {
+	All = 'connection.message_type_options.all',
+	Published = 'connection.message_type_options.published',
+	Received = 'connection.message_type_options.received',
+}
+const messageTypePopselectOptions = computed<Array<SelectOption>>(() =>
+	Object.values(MessageTypeEnum).map(value => ({ label: t(value), value })),
+)
+const messageTypePopselectLabelRender: SelectMenuLabelRender = option => {
+	const iconMap = {
+		[MessageTypeEnum.All]: 'tabler:message',
+		[MessageTypeEnum.Published]: 'tabler:message-up',
+		[MessageTypeEnum.Received]: 'tabler:message-down',
+	}
+	return (
+		<NFlex align="center" size="small">
+			<Icon icon={iconMap[option.value as MessageTypeEnum]} height="14" width="14" />
+			<span>{option.label}</span>
+		</NFlex>
+	)
+}
+const messageType = ref(MessageTypeEnum.All)
+const messageTypePopselectVisible = ref(false)
+//#endregion
 
 //#region footer高度
 const footerHeight = computed(() => `${connectionsStore.contentFooterHeight}px`)
@@ -41,11 +86,56 @@ function publish() {
 
 <template>
 	<div class="content-body">
-		<div class="body"></div>
+		<div class="body">
+			<div class="body_header">
+				<NPopselect
+					trigger="click"
+					size="small"
+					v-model:value="decodeMessageBy"
+					v-model:show="decodeMessageByPopselectVisible"
+					:options="decodeMessageByPopselectOptions"
+				>
+					<NTooltip :disabled="decodeMessageByPopselectVisible">
+						<template #trigger>
+							<NButton quaternary size="tiny">
+								{{ decodeMessageBy }}
+							</NButton>
+						</template>
+						{{ t('connection.decode_message_by') }}
+					</NTooltip>
+				</NPopselect>
+				<NPopselect
+					trigger="click"
+					size="small"
+					v-model:value="messageType"
+					v-model:show="messageTypePopselectVisible"
+					:options="messageTypePopselectOptions"
+					:render-label="messageTypePopselectLabelRender"
+				>
+					<NTooltip :disabled="messageTypePopselectVisible">
+						<template #trigger>
+							<NButton quaternary size="tiny">
+								{{ t(messageType) }}
+							</NButton>
+						</template>
+						{{ t('connection.message_type') }}
+					</NTooltip>
+				</NPopselect>
+			</div>
+			<NVirtualList
+				class="body_content"
+				item-resizable
+				:item-size="63"
+				:items="Array.from({ length: 100 }).map(() => ({ id: Math.random() }))"
+			>
+				<template #default="{ item }">
+					<Message content="" />
+				</template>
+			</NVirtualList>
+		</div>
 		<div class="footer" :resizing="footerResizing" :collapse="connectionsStore.contentFooterCollapsed">
 			<button
 				class="footer_collapse"
-				:collapse="connectionsStore.contentFooterCollapsed"
 				@click="connectionsStore.contentFooterCollapsed = !connectionsStore.contentFooterCollapsed"
 			>
 				<Icon height="18" width="18" icon="tabler:chevron-down" />
@@ -59,28 +149,19 @@ function publish() {
 					v-model:value="publishData.topic"
 					:status="publishDataValidateRes.topic ? undefined : 'error'"
 				/>
-				<QosSelect size="small" style="width: 150px; min-width: 150px" v-model:value="publishData.options.qos" />
-				<NButton size="small" tertiary @click="publishData.options.retain = !publishData.options.retain">
-					<template #icon>
-						<Icon
-							:icon="publishData.options.retain ? 'tabler:check' : 'tabler:cancel'"
-							:color="publishData.options.retain ? 'var(--success-color)' : 'var(--error-color)'"
-						/>
-					</template>
-					{{ t('connection.retain') }}
-				</NButton>
-				<NButton size="small" tertiary>
-					<template #icon>
-						<Icon height="14" width="14" icon="tabler:dots-vertical" />
-					</template>
-				</NButton>
+				<PublishSetting />
 			</div>
 			<Editor class="footer_body" v-model:value="publishData.message" :error="!publishDataValidateRes.message" />
-			<NButton class="footer_send" type="primary" circle @click="publish()">
-				<template #icon>
-					<Icon icon="tabler:send-2" />
+			<NTooltip>
+				<template #trigger>
+					<NButton class="footer_send" type="primary" circle @click="publish()">
+						<template #icon>
+							<Icon icon="tabler:send-2" />
+						</template>
+					</NButton>
 				</template>
-			</NButton>
+				{{ t('connection.publish') }}
+			</NTooltip>
 		</div>
 	</div>
 </template>
@@ -90,12 +171,29 @@ function publish() {
 	flex: 1;
 	display: flex;
 	flex-direction: column;
+	background-color: var(--card-color);
+	border-radius: var(--border-radius);
+	border: 1px solid var(--border-color);
 	overflow: hidden;
 }
 
 .body {
 	flex: 1;
-	background-color: var(--button-color-2);
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+
+	&_header {
+		display: flex;
+		justify-content: space-between;
+		border-bottom: 1px solid var(--border-color);
+		padding: 4px 8px;
+	}
+
+	&_content {
+		flex: 1;
+		padding: 0 8px;
+	}
 }
 
 .footer {
@@ -109,9 +207,19 @@ function publish() {
 	z-index: 1;
 
 	&[collapse='true'] {
-		margin-top: -17px;
-		transform: translateY(20px);
 		max-height: 0;
+
+		.footer_collapse {
+			transform: translate(-50%, -100%);
+
+			svg {
+				transform: rotate(180deg);
+			}
+		}
+
+		.footer_drag {
+			pointer-events: none;
+		}
 	}
 
 	&[resizing='true'] {
@@ -136,14 +244,6 @@ function publish() {
 		color: var(--text-color-3);
 		transition: all 0.2s var(--cubic-bezier-ease-in-out);
 		z-index: 2;
-
-		&[collapse='true'] {
-			transform: translate(-50%, calc(0px - 100% - 16px));
-
-			svg {
-				transform: rotate(180deg);
-			}
-		}
 
 		&:hover {
 			box-shadow: var(--box-shadow-1);
@@ -189,13 +289,7 @@ function publish() {
 		padding: 4px 8px;
 		border-bottom: 1px solid var(--border-color);
 
-		:deep(.n-input),
-		:deep(.n-base-selection-label) {
-			background-color: var(--button-color-2);
-		}
-
-		:deep(.n-input__border),
-		:deep(.n-base-selection__border) {
+		:deep(.n-input__border) {
 			border: none;
 		}
 	}
@@ -203,6 +297,7 @@ function publish() {
 	&_body {
 		flex: 1;
 		border-bottom-right-radius: var(--border-radius);
+		border-bottom-left-radius: var(--border-radius);
 		border: 1px solid transparent;
 		transition: all 0.2s var(--cubic-bezier-ease-in-out);
 

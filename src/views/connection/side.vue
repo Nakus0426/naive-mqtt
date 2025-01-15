@@ -391,8 +391,10 @@ function findSiblings(
 	max-width: v-bind(sideWidth);
 	display: flex;
 	flex-direction: column;
-	border-right: 1px solid var(--border-color);
 	transition: all 0.2s var(--cubic-bezier-ease-in-out);
+	background-color: var(--card-color);
+	border-radius: var(--border-radius);
+	border: 1px solid var(--border-color);
 	z-index: 1;
 
 	&[collapse='true'] {
@@ -406,7 +408,7 @@ function findSiblings(
 
 	&_collapse {
 		position: absolute;
-		right: 0;
+		right: -2px;
 		top: 50%;
 		height: 22px;
 		width: 22px;
@@ -517,7 +519,7 @@ function findSiblings(
 
 .drag {
 	position: absolute;
-	right: -2px;
+	right: -4.5px;
 	top: 0;
 	bottom: 0;
 	width: 4px;
