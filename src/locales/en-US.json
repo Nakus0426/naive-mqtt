@@ -23,7 +23,9 @@
 		"disconnect": "Disconnect",
 		"more": "More",
 		"enable": "Enable",
-		"disable": "Disable"
+		"disable": "Disable",
+		"restore_defaults": "Restore Defaults",
+		"follow_system": "Follow System"
 	},
 	"editor": {
 		"line": "Ln",
@@ -47,6 +49,9 @@
 				"system": "Auto",
 				"light": "Light",
 				"dark": "Dark"
+			},
+			"primary_color": {
+				"title": "Primary Color"
 			},
 			"language": {
 				"title": "Language"

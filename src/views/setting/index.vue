@@ -19,11 +19,14 @@ const [DefineThemeRadio, ThemeRadio] = createReusableTemplate<{ theme: NativeThe
 })
 const themeRadioImageMap = { system: ThemeSystemImage, light: ThemeLightImage, dark: ThemeDarkImage }
 
+//#region 主题
 function handleThemeUpdate(theme: NativeTheme['themeSource']) {
 	window.electronAPI.updateTheme(theme)
 	appStore.theme = theme
 }
+//#endregion
 
+//#region 语言
 const locales: Array<SelectBaseOption> = Object.entries(messages.value).map(([key, value]) => ({
 	label: value.language,
 	value: key,
@@ -32,6 +35,7 @@ const locales: Array<SelectBaseOption> = Object.entries(messages.value).map(([ke
 function handleLocaleUpdate(value: string) {
 	appStore.locale = value
 }
+//#endregion
 </script>
 
 <template>
@@ -73,6 +77,24 @@ function handleLocaleUpdate(value: string) {
 					<ThemeRadio theme="light" :title="t('setting.appearance.theme.light')" />
 					<ThemeRadio theme="dark" :title="t('setting.appearance.theme.dark')" />
 				</div>
+			</CellItem>
+			<CellItem :label="t('setting.appearance.primary_color.title')">
+				<NColorPicker
+					style="width: 200px"
+					size="small"
+					:modes="['hex']"
+					:show-alpha="false"
+					v-model:value="appStore.primaryColor"
+				>
+					<template #action>
+						<NButton size="tiny" @click="appStore.primaryColorRestoreDefaults()">
+							{{ t('common.restore_defaults') }}
+						</NButton>
+						<NButton size="tiny" @click="appStore.primaryColorFollowSystem()">
+							{{ t('common.follow_system') }}
+						</NButton>
+					</template>
+				</NColorPicker>
 			</CellItem>
 			<CellItem :label="t('setting.appearance.language.title')">
 				<NSelect

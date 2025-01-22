@@ -96,6 +96,7 @@ export function mqtt(mainWindow: BrowserWindow) {
 	})
 
 	ipcMain.handle(Main.MqttPublish, async (_event, data: PublishData) => {
+		console.log(data)
 		try {
 			const client = clientPool.get(data.clientId)
 			if (!client) return response(false)

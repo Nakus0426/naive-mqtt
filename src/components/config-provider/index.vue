@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { darkTheme, zhCN, dateZhCN, enUS, dateEnUS } from 'naive-ui'
 import ProviderContent from './content.vue'
-import { customDarkThemeOverrides } from '@/assets/theme/dark'
-import { customLightThemeOverrides } from '@/assets/theme/light'
+import { generateThemeOverrides } from '@/configs/theme'
 import { useAppStore } from '@/store/modules/app'
 import { useI18n } from 'vue-i18n'
 
@@ -11,7 +10,12 @@ const { globalStyle = true } = defineProps<{ globalStyle?: boolean }>()
 const appStore = useAppStore()
 
 const theme = computed(() => (appStore.isDarkTheme ? darkTheme : null))
-const themeOverrides = computed(() => (appStore.isDarkTheme ? customDarkThemeOverrides : customLightThemeOverrides))
+const themeOverrides = ref<any>(generateThemeOverrides(appStore.isDarkTheme, appStore.primaryColor))
+watch([() => appStore.isDarkTheme, () => appStore.primaryColor], async () => {
+	themeOverrides.value = null
+	await nextTick()
+	themeOverrides.value = generateThemeOverrides(appStore.isDarkTheme, appStore.primaryColor)
+})
 
 const { locale } = useI18n()
 const localeMap = {
@@ -23,9 +27,8 @@ const localeMap = {
 <template>
 	<NConfigProvider
 		abstract
-		inline-theme-disabled
 		:theme
-		:theme-overrides="themeOverrides"
+		:theme-overrides
 		:locale="localeMap[locale].locale"
 		:date-locale="localeMap[locale].dateLocale"
 	>

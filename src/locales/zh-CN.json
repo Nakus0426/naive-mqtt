@@ -23,7 +23,9 @@
 		"disconnect": "断开连接",
 		"more": "更多",
 		"enable": "启用",
-		"disable": "禁用"
+		"disable": "禁用",
+		"restore_defaults": "恢复默认",
+		"follow_system": "跟随系统"
 	},
 	"editor": {
 		"line": "行",
@@ -47,6 +49,9 @@
 				"system": "自动",
 				"light": "浅色",
 				"dark": "深色"
+			},
+			"primary_color": {
+				"title": "强调色"
 			},
 			"language": {
 				"title": "语言"

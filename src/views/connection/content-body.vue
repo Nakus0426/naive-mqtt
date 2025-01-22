@@ -2,7 +2,7 @@
 import { useI18n } from 'vue-i18n'
 import { type MessageSchema } from '@/configs/i18n'
 import { useConnectionsStore } from '@/store/modules/connections'
-import { useContent } from './use-content'
+import { DecodeMessageByEnum, useContent } from './use-content'
 import PublishSetting from './publish-setting.vue'
 import Message from './message.vue'
 import { NFlex, NPopselect, type SelectOption } from 'naive-ui'
@@ -11,21 +11,21 @@ import { Icon } from '@iconify/vue'
 
 const { t } = useI18n<{ message: MessageSchema }>()
 const connectionsStore = useConnectionsStore()
-const { publishData, publishDataValidateRes, publish: publishFunc } = useContent()
+const {
+	connected,
+	publishData,
+	publishDataValidateRes,
+	publishLoading,
+	decodeMessageBy,
+	publish: publishFunc,
+} = useContent()
 
-enum DecodeMessageByEnum {
-	Plaintext = 'Plaintext',
-	JSON = 'Json',
-	Base64 = 'Base64',
-	Hex = 'Hex',
-	CBOR = 'CBOR',
-	MsgPack = 'MsgPack',
-}
+//#region 消息解码格式
 const decodeMessageByPopselectOptions = computed<Array<SelectOption>>(() =>
 	Object.keys(DecodeMessageByEnum).map(key => ({ label: key, value: DecodeMessageByEnum[key] })),
 )
-const decodeMessageBy = ref(DecodeMessageByEnum.Plaintext)
 const decodeMessageByPopselectVisible = ref(false)
+//#endregion
 
 //#region 消息类型
 enum MessageTypeEnum {
@@ -145,7 +145,7 @@ function publish() {
 				<NInput
 					size="small"
 					clearable
-					:placeholder="t('common.input_required', { name: t('connection.new_subscription_dialog.topic') })"
+					:placeholder="t('connection.new_subscription_dialog.topic')"
 					v-model:value="publishData.topic"
 					:status="publishDataValidateRes.topic ? undefined : 'error'"
 				/>
@@ -154,13 +154,20 @@ function publish() {
 			<Editor class="footer_body" v-model:value="publishData.message" :error="!publishDataValidateRes.message" />
 			<NTooltip>
 				<template #trigger>
-					<NButton class="footer_send" type="primary" circle @click="publish()">
+					<NButton
+						class="footer_send"
+						type="primary"
+						circle
+						:loading="publishLoading"
+						:disabled="!connected"
+						@click="publish()"
+					>
 						<template #icon>
 							<Icon icon="tabler:send-2" />
 						</template>
 					</NButton>
 				</template>
-				{{ t('connection.publish') }}
+				{{ t(connected ? 'connection.publish' : 'connection.connect_first') }}
 			</NTooltip>
 		</div>
 	</div>

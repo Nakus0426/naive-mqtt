@@ -1,3 +1,4 @@
+import { defaultPrimaryColorDark, defaultPrimaryColorLight } from '@/configs/theme.ts'
 import { type NativeTheme } from 'electron'
 import { defineStore } from 'pinia'
 
@@ -7,9 +8,29 @@ import { defineStore } from 'pinia'
 export const useAppStore = defineStore(
 	'APP',
 	() => {
+		//#region 主题
 		const isDarkTheme = useDark({ selector: 'html', attribute: 'color-scheme', valueDark: 'dark', valueLight: 'light' })
 		const theme = ref<NativeTheme['themeSource']>('system')
 		theme.value = window.electronAPI.getTheme()
+		//#endregion
+
+		//#region 强调色
+		const primaryColor = ref<string>()
+		if (!primaryColor.value) primaryColorRestoreDefaults()
+
+		function primaryColorRestoreDefaults() {
+			primaryColor.value = isDarkTheme.value ? defaultPrimaryColorDark : defaultPrimaryColorLight
+		}
+
+		function primaryColorFollowSystem() {
+			const accentColor = `#${window.electronAPI.getAccentColor()}`
+			primaryColor.value = accentColor
+				? accentColor
+				: isDarkTheme.value
+					? defaultPrimaryColorDark
+					: defaultPrimaryColorLight
+		}
+		//#endregion
 
 		const isMenuCollapsed = ref(true)
 
@@ -19,13 +40,16 @@ export const useAppStore = defineStore(
 		return {
 			isDarkTheme,
 			theme,
+			primaryColorRestoreDefaults,
+			primaryColorFollowSystem,
+			primaryColor,
 			isMenuCollapsed,
 			locale,
 		}
 	},
 	{
 		persist: {
-			pick: ['isDarkTheme', 'isMenuCollapsed', 'locale'],
+			pick: ['isDarkTheme', 'primaryColor', 'isMenuCollapsed', 'locale'],
 		},
 	},
 )

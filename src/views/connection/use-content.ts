@@ -8,6 +8,15 @@ import {
 } from '@/store/modules/connections.ts'
 import { isEmpty } from 'es-toolkit/compat'
 
+export enum DecodeMessageByEnum {
+	Plaintext = 'Plaintext',
+	JSON = 'Json',
+	Base64 = 'Base64',
+	Hex = 'Hex',
+	CBOR = 'CBOR',
+	MsgPack = 'MsgPack',
+}
+
 const [useProvideContent, useContent] = createInjectionState((clientId: Connection['clientId']) => {
 	const connectionsStore = useConnectionsStore()
 
@@ -75,19 +84,11 @@ const [useProvideContent, useContent] = createInjectionState((clientId: Connecti
 			qos: 0,
 			retain: false,
 			dup: false,
-			properties: {
-				payloadFormatIndicator: undefined,
-				messageExpiryInterval: undefined,
-				topicAlias: undefined,
-				responseTopic: undefined,
-				correlationData: undefined,
-				userProperties: {},
-				subscriptionIdentifier: undefined,
-				contentType: undefined,
-			},
+			properties: {},
 		},
 	})
 	const publishDataValidateRes = ref({ topic: true, message: true })
+	const publishLoading = ref(false)
 
 	function publishValidate() {
 		const topic = !isEmpty(publishData.value.topic)
@@ -95,10 +96,22 @@ const [useProvideContent, useContent] = createInjectionState((clientId: Connecti
 		publishDataValidateRes.value = { topic, message }
 		return topic && message
 	}
-	function publish() {
-		publishValidate()
+
+	async function publish() {
+		try {
+			publishLoading.value = true
+			if (!publishValidate()) return
+			const { success, message } = await window.electronAPI.mqttPublish(toRaw(publishData.value))
+			if (!success) window.$message.error(message)
+		} catch ({ message }) {
+			window.$message.error(message)
+		} finally {
+			publishLoading.value = false
+		}
 	}
 	//#endregion
+
+	const decodeMessageBy = ref(DecodeMessageByEnum.Plaintext)
 
 	return {
 		clientId,
@@ -109,6 +122,8 @@ const [useProvideContent, useContent] = createInjectionState((clientId: Connecti
 		subscriptionStatus,
 		publishData,
 		publishDataValidateRes,
+		publishLoading,
+		decodeMessageBy,
 		subscribe,
 		unsubscribe,
 		publishValidate,
