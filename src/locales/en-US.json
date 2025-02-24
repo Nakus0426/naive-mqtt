@@ -24,8 +24,7 @@
 		"more": "More",
 		"enable": "Enable",
 		"disable": "Disable",
-		"restore_defaults": "Restore Defaults",
-		"follow_system": "Follow System"
+		"restore_defaults": "Restore Defaults"
 	},
 	"editor": {
 		"line": "Ln",
@@ -51,7 +50,8 @@
 				"dark": "Dark"
 			},
 			"primary_color": {
-				"title": "Primary Color"
+				"title": "Primary Color",
+				"follow_system": "Follow System"
 			},
 			"language": {
 				"title": "Language"
@@ -76,10 +76,12 @@
 		"connect_success": "Connected",
 		"disconnect_first": "Please disconnect first",
 		"connect_first": "Please connect first",
+		"disabled_first": "Please disable first",
 		"publish": "Publish",
 		"publish_setting": "Publish Setting",
 		"message_type": "Message Type",
 		"decode_message_by": "Decode Message By",
+		"for_publishing": "For Publishing",
 		"new_connection_dialog": {
 			"save_and_connect": "Save and Connect",
 			"save_only": "Save Only",

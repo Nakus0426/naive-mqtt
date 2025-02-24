@@ -24,8 +24,7 @@
 		"more": "更多",
 		"enable": "启用",
 		"disable": "禁用",
-		"restore_defaults": "恢复默认",
-		"follow_system": "跟随系统"
+		"restore_defaults": "恢复默认"
 	},
 	"editor": {
 		"line": "行",
@@ -51,7 +50,8 @@
 				"dark": "深色"
 			},
 			"primary_color": {
-				"title": "强调色"
+				"title": "强调色",
+				"follow_system": "跟随系统"
 			},
 			"language": {
 				"title": "语言"
@@ -76,10 +76,12 @@
 		"connect_success": "已连接",
 		"disconnect_first": "请先断开连接",
 		"connect_first": "请先建立连接",
+		"disabled_first": "请先禁用订阅",
 		"publish": "发布",
 		"publish_setting": "发布设置",
 		"message_type": "消息类型",
 		"decode_message_by": "解码消息的格式",
+		"for_publishing": "用于发布",
 		"new_connection_dialog": {
 			"save_and_connect": "保存并连接",
 			"save_only": "仅保存",

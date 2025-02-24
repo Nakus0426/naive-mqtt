@@ -20,20 +20,23 @@ export function mqtt(mainWindow: BrowserWindow) {
 				client = await connectAsync(url, formatedOptions)
 				client.on('connect', () => {
 					console.log('connected')
-					mainWindow.webContents.send(Main.MqttOnConnect, clientId)
+					mainWindow.webContents.send(Main.OnMqttConnect, clientId)
 				})
 				client.on('disconnect', () => {
 					console.log('disconnected')
-					mainWindow.webContents.send(Main.MqttOnDisconnect, clientId)
+					mainWindow.webContents.send(Main.OnMqttDisconnect, clientId)
 				})
 				client.on('end', () => {
 					console.log('end')
-					mainWindow.webContents.send(Main.MqttOnDisconnect, clientId)
+					mainWindow.webContents.send(Main.OnMqttDisconnect, clientId)
 				})
 				client.on('error', error => {
 					console.log('error', error)
-					mainWindow.webContents.send(Main.MqttOnError, error.message)
+					mainWindow.webContents.send(Main.OnMqttError, error.message)
 				})
+				client.on('message', (topic, message, packet) =>
+					mainWindow.webContents.send(Main.OnMqttMessage, clientId, topic, message, packet),
+				)
 				clientPool.set(clientId, client)
 				return response(true)
 			}
@@ -48,7 +51,7 @@ export function mqtt(mainWindow: BrowserWindow) {
 		}
 	})
 
-	ipcMain.handle(Main.MqttDisconnect, async (_event, clientId: IClientOptions['clientId']) => {
+	ipcMain.handle(Main.MqttDisconnect, async (_event, clientId: string) => {
 		try {
 			const client = clientPool.get(clientId)
 			if (!client) return response(true)
@@ -59,13 +62,13 @@ export function mqtt(mainWindow: BrowserWindow) {
 		}
 	})
 
-	ipcMain.on(Main.MqttConnected, (event, clientId: IClientOptions['clientId']) => {
+	ipcMain.on(Main.MqttConnected, (event, clientId: string) => {
 		const client = clientPool.get(clientId)
 		event.returnValue = client ? client.connected : false
 	})
 
-	ipcMain.on(Main.MqttConnectedBatch, (event, clientId: Array<IClientOptions['clientId']>) => {
-		const res = new Map<IClientOptions['clientId'], boolean>()
+	ipcMain.on(Main.MqttConnectedBatch, (event, clientId: Array<string>) => {
+		const res = new Map<string, boolean>()
 		clientId.forEach(item => {
 			const client = clientPool.get(item)
 			res.set(item, client ? client.connected : false)

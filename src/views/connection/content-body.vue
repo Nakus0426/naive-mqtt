@@ -122,14 +122,9 @@ function publish() {
 					</NTooltip>
 				</NPopselect>
 			</div>
-			<NVirtualList
-				class="body_content"
-				item-resizable
-				:item-size="63"
-				:items="Array.from({ length: 100 }).map(() => ({ id: Math.random() }))"
-			>
+			<NVirtualList class="body_content" item-resizable :item-size="63" :items="[]">
 				<template #default="{ item }">
-					<Message content="" />
+					<Message color="" topic="" time="" :qos="0" content="" />
 				</template>
 			</NVirtualList>
 		</div>
@@ -227,6 +222,11 @@ function publish() {
 		.footer_drag {
 			pointer-events: none;
 		}
+
+		.footer_send {
+			opacity: 0;
+			display: none;
+		}
 	}
 
 	&[resizing='true'] {
@@ -317,6 +317,11 @@ function publish() {
 		position: absolute;
 		right: 8px;
 		bottom: 38px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		opacity: 1;
+		transition: all 0.2s var(--cubic-bezier-ease-in-out);
 		box-shadow: var(--box-shadow-1);
 	}
 }

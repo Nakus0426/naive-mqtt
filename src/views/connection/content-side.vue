@@ -147,13 +147,16 @@ enum TreeDropdownOptionsKeyEnum {
 const treeDropdownPosition = ref({ x: null, y: null })
 const treeDropdownVisible = ref(false)
 const treeDropdownOptions = ref<Array<DropdownOption>>()
-const dropdownOptionRender: DropdownOptionRender = ({ node, option }) => (
-	<NTooltip content-style="white-space: nowrap;" placement="right" disabled={!option.disabled}>
-		{{ trigger: () => node, default: () => t('connection.connect_first') }}
-	</NTooltip>
-)
+const dropdownOptionRender: DropdownOptionRender = ({ node, option }) => {
+	const { disabled, tooltipContent } = option
+	return (
+		<NTooltip content-style="white-space: nowrap;" placement="right" disabled={!disabled}>
+			{{ trigger: () => node, default: () => t(tooltipContent as string) }}
+		</NTooltip>
+	)
+}
 const treeNodeProps: TreeNodeProps = ({ option }) => {
-	const enabled = option.data['enabled']
+	const { enabled, id } = option.data as Subscription
 	return {
 		style: { '--color': option.data['color'] },
 		enabled,
@@ -178,6 +181,7 @@ const treeNodeProps: TreeNodeProps = ({ option }) => {
 							),
 							disabled: !connected.value,
 							data: option.data,
+							tooltipContent: 'connection.connect_first',
 						},
 						{ key: nanoid(), type: 'divider' },
 						{
@@ -190,7 +194,9 @@ const treeNodeProps: TreeNodeProps = ({ option }) => {
 							label: t('common.edit'),
 							key: TreeDropdownOptionsKeyEnum.Edit,
 							icon: () => <Icon height="16" width="16" icon="tabler:edit" />,
+							disabled: subscriptionStatus.value.has(id) && subscriptionStatus.value.get(id),
 							data: option.data,
+							tooltipContent: 'connection.disabled_first',
 						},
 						{ key: nanoid(), type: 'divider' },
 						{

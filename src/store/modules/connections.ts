@@ -1,7 +1,13 @@
 import { defineStore } from 'pinia'
 import { getItem, removeItem, setItem } from 'localforage'
-import { type IClientSubscribeOptions, type IClientOptions, type IClientPublishOptions } from 'mqtt'
+import {
+	type IClientSubscribeOptions,
+	type IClientOptions,
+	type IClientPublishOptions,
+	type IPublishPacket,
+} from 'mqtt'
 import { nanoid } from 'nanoid'
+import { EventBusKey } from '@vueuse/core'
 
 const CONNECTIONS_STORAGE_KEY = 'connections'
 
@@ -20,11 +26,12 @@ export type Connection = {
 	IClientOptions
 
 export const ConnectionUpdateEventKey = Symbol()
+export const ConnectionStatusUpdateEventKey: EventBusKey<{ clientId: string; connected: boolean }> = Symbol()
 export const SubscriptionUpdateEventKey = Symbol()
 
 export type Subscription = {
 	id: string
-	clientId?: Connection['clientId']
+	clientId?: string
 	parentId?: string
 	name?: string
 	enabled?: boolean
@@ -36,7 +43,7 @@ export type Subscription = {
 } & IClientSubscribeOptions
 
 export type PublishData = {
-	clientId: Connection['clientId']
+	clientId: string
 	topic: string
 	message: string
 	options?: IClientPublishOptions
@@ -56,15 +63,16 @@ export const useConnectionsStore = defineStore(
 
 		async function init() {
 			connectionTree.value = await getConnectionTree()
-			window.electronAPI.mqttOnConnect(handleConnectionConnected)
-			window.electronAPI.mqttOnDisconnect(handleConnectionDisconnected)
-			window.electronAPI.mqttOnError(handleConnectionError)
+			window.electronAPI.onMqttConnect(handleConnectionConnected)
+			window.electronAPI.onMqttDisconnect(handleConnectionDisconnected)
+			window.electronAPI.onMqttError(handleConnectionError)
+			window.electronAPI.onMqttMessage(handleMessage)
 			initConnectionStatus()
 		}
 
 		//#region 连接增删改查
 		const connectionTree = ref<Array<Connection>>([])
-		const connectionStatus = ref<Map<Connection['clientId'], boolean>>()
+		const connectionStatus = ref<Map<string, boolean>>()
 		const isImmediateConnect = ref(false)
 
 		function initConnectionStatus() {
@@ -94,7 +102,7 @@ export const useConnectionsStore = defineStore(
 			await setItem(CONNECTIONS_STORAGE_KEY, toRaw(connectionTree.value))
 		}
 
-		async function deleteConnection(clientId: Connection['clientId']) {
+		async function deleteConnection(clientId: string) {
 			const queue = connectionTree.value.slice()
 			while (queue.length > 0) {
 				const currentNode = queue.shift()
@@ -115,7 +123,7 @@ export const useConnectionsStore = defineStore(
 		}
 
 		async function updateConnection(connection: Connection) {
-			const findSiblings = (clientId: Connection['clientId'], tree: Array<Connection>) => {
+			const findSiblings = (clientId: string, tree: Array<Connection>) => {
 				if (!tree) return [null, null]
 				const index = tree.findIndex(node => node.clientId === clientId)
 				if (index !== -1) return [tree, index]
@@ -132,7 +140,7 @@ export const useConnectionsStore = defineStore(
 			connectionUpdateNotify()
 		}
 
-		function getConnection(clientId: Connection['clientId']) {
+		function getConnection(clientId: string) {
 			const queue = toRaw(connectionTree.value).slice()
 			while (queue.length > 0) {
 				let currentNode = queue.shift()
@@ -157,34 +165,40 @@ export const useConnectionsStore = defineStore(
 		//#endregion
 
 		//#region 连接客户端
-		async function connect(clientId: Connection['clientId']) {
+		async function connect(clientId: string) {
 			try {
 				const connection = getConnection(clientId)
 				if (!connection) return
 				const { success, message } = await window.electronAPI.mqttConnect(connection)
-				if (success) connectionStatus.value.set(clientId, true)
-				else window.$message.error(message)
+				if (success) {
+					connectionStatus.value.set(clientId, true)
+					useEventBus(ConnectionStatusUpdateEventKey).emit({ clientId, connected: true })
+				} else window.$message.error(message)
 			} catch ({ message }) {
 				window.$message.error(message)
 			}
 		}
 
-		async function disconnect(clientId: Connection['clientId']) {
+		async function disconnect(clientId: string) {
 			try {
 				const { success, message } = await window.electronAPI.mqttDisconnect(clientId)
-				if (success) connectionStatus.value.set(clientId, false)
-				else window.$message.error(message)
+				if (success) {
+					connectionStatus.value.set(clientId, false)
+					useEventBus(ConnectionStatusUpdateEventKey).emit({ clientId, connected: false })
+				} else window.$message.error(message)
 			} catch ({ message }) {
 				window.$message.error(message)
 			}
 		}
 
-		function handleConnectionConnected(clientId: Connection['clientId']) {
+		function handleConnectionConnected(clientId: string) {
 			connectionStatus.value.set(clientId, true)
+			useEventBus(ConnectionStatusUpdateEventKey).emit({ clientId, connected: true })
 		}
 
-		function handleConnectionDisconnected(clientId: Connection['clientId']) {
+		function handleConnectionDisconnected(clientId: string) {
 			connectionStatus.value.set(clientId, false)
+			useEventBus(ConnectionStatusUpdateEventKey).emit({ clientId, connected: false })
 		}
 
 		function handleConnectionError(message: string) {
@@ -193,7 +207,7 @@ export const useConnectionsStore = defineStore(
 		//#endregion
 
 		//#region 订阅增删改查
-		async function getSubscriptionTree(clientId: Connection['clientId']) {
+		async function getSubscriptionTree(clientId: string) {
 			return (await getItem<Array<Subscription>>(clientId)) || []
 		}
 
@@ -207,7 +221,7 @@ export const useConnectionsStore = defineStore(
 			subscriptionUpdateNotify()
 		}
 
-		async function deleteSubscription(clientId: Connection['clientId'], id: Subscription['id']) {
+		async function deleteSubscription(clientId: string, id: string) {
 			const tree = (await getItem<Array<Subscription>>(clientId)) || []
 			for (let i = 0, len = tree.length; i < len; i++) {
 				const node = tree[i]
@@ -252,7 +266,7 @@ export const useConnectionsStore = defineStore(
 			subscriptionUpdateNotify()
 		}
 
-		async function getSubscription(clientId: Connection['clientId'], id: Subscription['id']) {
+		async function getSubscription(clientId: string, id: string) {
 			const tree = (await getItem<Array<Subscription>>(clientId)) || []
 			for (let i = 0, len = tree.length; i < len; i++) {
 				const node = tree[i]
@@ -265,7 +279,7 @@ export const useConnectionsStore = defineStore(
 			return null
 		}
 
-		async function updateSubscriptionTree(clientId: Connection['clientId'], tree: Array<Subscription>) {
+		async function updateSubscriptionTree(clientId: string, tree: Array<Subscription>) {
 			await setItem(clientId, tree)
 			subscriptionUpdateNotify()
 		}
@@ -274,6 +288,10 @@ export const useConnectionsStore = defineStore(
 			useEventBus(SubscriptionUpdateEventKey).emit()
 		}
 		//#endregion
+
+		function handleMessage(clientId: string, topic: string, message: Buffer, packet: IPublishPacket) {
+			console.log(clientId, topic, message, packet)
+		}
 
 		return {
 			isImmediateConnect,

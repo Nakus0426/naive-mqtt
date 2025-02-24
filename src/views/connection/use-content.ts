@@ -2,6 +2,7 @@ import {
 	type Connection,
 	type PublishData,
 	type Subscription,
+	ConnectionStatusUpdateEventKey,
 	ConnectionUpdateEventKey,
 	SubscriptionUpdateEventKey,
 	useConnectionsStore,
@@ -35,7 +36,6 @@ const [useProvideContent, useContent] = createInjectionState((clientId: Connecti
 
 	useEventBus(ConnectionUpdateEventKey).on(() => {
 		updateConnection()
-		initSubscriptionStatus()
 	})
 	//#endregion
 
@@ -43,33 +43,45 @@ const [useProvideContent, useContent] = createInjectionState((clientId: Connecti
 	const subscriptionTree = ref<Array<Subscription>>([])
 	const subscriptionStatus = ref(new Map<Subscription['id'], boolean>())
 
-	useEventBus(SubscriptionUpdateEventKey).on(() => updateSubscriptionTree())
+	useEventBus(SubscriptionUpdateEventKey).on(updateSubscriptionTree)
 
 	async function updateSubscriptionTree() {
 		subscriptionTree.value = await connectionsStore.getSubscriptionTree(clientId)
+		initSubscriptionStatus()
 	}
 	updateSubscriptionTree()
 
 	async function subscribe(subscription: Subscription) {
-		if (subscriptionStatus.value.get(subscription.id)) return
-		await window.electronAPI.mqttSubscribe(subscription)
-		subscriptionStatus.value.set(subscription.id, true)
+		const { id } = subscription
+		if (subscriptionStatus.value.get(id)) return
+		const { success, message } = await window.electronAPI.mqttSubscribe(toRaw(subscription))
+		if (!success && message) window.$message.error(message)
+		subscriptionStatus.value.set(id, true)
 		subscription.enabled = true
 		connectionsStore.updateSubscription(subscription)
 	}
 
 	async function unsubscribe(subscription: Subscription) {
-		if (!subscriptionStatus.value.get(subscription.id)) return
-		await window.electronAPI.mqttUnsubscribe(subscription)
-		subscriptionStatus.value.set(subscription.id, false)
+		const { id } = subscription
+		if (subscriptionStatus.value.has(id) && !subscriptionStatus.value.get(id)) return
+		const { success, message } = await window.electronAPI.mqttUnsubscribe(toRaw(subscription))
+		if (!success && message) window.$message.error(message)
+		subscriptionStatus.value.set(id, false)
 		subscription.enabled = false
 		connectionsStore.updateSubscription(subscription)
 	}
 
+	useEventBus(ConnectionStatusUpdateEventKey).on(res => {
+		const { clientId: _clientId, connected: _connected } = res
+		if (!_connected || clientId !== _clientId) return
+		initSubscriptionStatus()
+	})
+
 	function initSubscriptionStatus() {
 		subscriptionTree.value.forEach(node => {
-			node.enabled && !subscriptionStatus.value.get(node.id) && subscribe(node)
-			node.children.forEach(child => child.enabled && !subscriptionStatus.value.get(child.id) && subscribe(child))
+			const { enabled, id, children } = node
+			enabled && !subscriptionStatus.value.get(id) && subscribe(node)
+			children.forEach(child => child.enabled && !subscriptionStatus.value.get(child.id) && subscribe(child))
 		})
 	}
 

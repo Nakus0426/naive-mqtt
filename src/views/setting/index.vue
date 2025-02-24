@@ -14,12 +14,12 @@ const appStore = useAppStore()
 const [DefineCell, Cell] = createReusableTemplate<{ title: string }>({ inheritAttrs: false })
 const [DefineCellItem, CellItem] = createReusableTemplate<{ label: string }>()
 
+//#region 主题
 const [DefineThemeRadio, ThemeRadio] = createReusableTemplate<{ theme: NativeTheme['themeSource']; title: string }>({
 	inheritAttrs: false,
 })
 const themeRadioImageMap = { system: ThemeSystemImage, light: ThemeLightImage, dark: ThemeDarkImage }
 
-//#region 主题
 function handleThemeUpdate(theme: NativeTheme['themeSource']) {
 	window.electronAPI.updateTheme(theme)
 	appStore.theme = theme
@@ -60,7 +60,7 @@ function handleLocaleUpdate(value: string) {
 
 		<DefineThemeRadio v-slot="{ theme, title }">
 			<div class="theme-radio_item" :selected="appStore.theme === theme" @click="handleThemeUpdate(theme)">
-				<img :src="themeRadioImageMap[theme]" />
+				<img draggable="false" :src="themeRadioImageMap[theme]" />
 				<Icon height="20" width="20" color="var(--primary-color)" icon="material-symbols:check-circle-rounded" />
 				<span>{{ title }}</span>
 			</div>
@@ -79,22 +79,27 @@ function handleLocaleUpdate(value: string) {
 				</div>
 			</CellItem>
 			<CellItem :label="t('setting.appearance.primary_color.title')">
-				<NColorPicker
-					style="width: 200px"
-					size="small"
-					:modes="['hex']"
-					:show-alpha="false"
-					v-model:value="appStore.primaryColor"
-				>
-					<template #action>
-						<NButton size="tiny" @click="appStore.primaryColorRestoreDefaults()">
-							{{ t('common.restore_defaults') }}
-						</NButton>
-						<NButton size="tiny" @click="appStore.primaryColorFollowSystem()">
-							{{ t('common.follow_system') }}
-						</NButton>
-					</template>
-				</NColorPicker>
+				<NFlex align="center">
+					<NCheckbox v-model:checked="appStore.isPrimaryColorFollowSystem">
+						{{ t('setting.appearance.primary_color.follow_system') }}
+					</NCheckbox>
+					<NColorPicker
+						style="width: 200px"
+						size="small"
+						:modes="['hex']"
+						:show-alpha="false"
+						v-model:value="appStore.primaryColor"
+					>
+						<template #action>
+							<NButton size="tiny" @click="appStore.primaryColorRestoreDefaults()">
+								{{ t('common.restore_defaults') }}
+							</NButton>
+							<NButton size="tiny" @click="appStore.primaryColorFollowSystem()">
+								{{ t('setting.appearance.primary_color.title') }}
+							</NButton>
+						</template>
+					</NColorPicker>
+				</NFlex>
 			</CellItem>
 			<CellItem :label="t('setting.appearance.language.title')">
 				<NSelect
@@ -196,13 +201,15 @@ function handleLocaleUpdate(value: string) {
 
 		span {
 			position: absolute;
-			top: 0;
-			left: 0;
+			top: -1px;
+			left: -1px;
 			padding: 0 4px;
 			font-size: var(--font-size-small);
 			border-bottom-right-radius: var(--border-radius);
+			border-top-left-radius: var(--border-radius);
 			background-color: var(--primary-color);
-			color: var(--base-color);
+			color: color-contrast(var(--primary-color) vs #000, #fff);
+			transition: all 0.2s var(--cubic-bezier-ease-in-out);
 		}
 	}
 }

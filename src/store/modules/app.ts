@@ -16,7 +16,9 @@ export const useAppStore = defineStore(
 
 		//#region 强调色
 		const primaryColor = ref<string>()
+		const isPrimaryColorFollowSystem = ref(true)
 		if (!primaryColor.value) primaryColorRestoreDefaults()
+		if (isPrimaryColorFollowSystem.value) primaryColorFollowSystem()
 
 		function primaryColorRestoreDefaults() {
 			primaryColor.value = isDarkTheme.value ? defaultPrimaryColorDark : defaultPrimaryColorLight
@@ -30,6 +32,8 @@ export const useAppStore = defineStore(
 					? defaultPrimaryColorDark
 					: defaultPrimaryColorLight
 		}
+
+		window.electronAPI.onAccentColorChanged(color => (primaryColor.value = `#${color}`))
 		//#endregion
 
 		const isMenuCollapsed = ref(true)
@@ -40,6 +44,7 @@ export const useAppStore = defineStore(
 		return {
 			isDarkTheme,
 			theme,
+			isPrimaryColorFollowSystem,
 			primaryColorRestoreDefaults,
 			primaryColorFollowSystem,
 			primaryColor,
@@ -49,7 +54,7 @@ export const useAppStore = defineStore(
 	},
 	{
 		persist: {
-			pick: ['isDarkTheme', 'primaryColor', 'isMenuCollapsed', 'locale'],
+			pick: ['isDarkTheme', 'primaryColor', 'isPrimaryColorFollowSystem', 'isMenuCollapsed', 'locale'],
 		},
 	},
 )

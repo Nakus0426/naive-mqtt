@@ -45,3 +45,7 @@ ipcMain.handle(Main.OpenFileDialog, async (event, options) => {
 })
 
 ipcMain.on(Main.GetAccentColor, event => (event.returnValue = systemPreferences.getAccentColor()))
+
+systemPreferences.on('accent-color-changed', (_event, color) => {
+	mainWindow.webContents.send(Main.OnAccentColorChanged, color)
+})

@@ -2,37 +2,25 @@
 import { highlight } from '@/hooks/useShiki'
 import { useI18n } from 'vue-i18n'
 import { type MessageSchema } from '@/configs/i18n'
+import { useContent } from './use-content'
 
-const { placement = 'left', content } = defineProps<{ placement?: 'left' | 'right'; content: any }>()
+const {
+	placement = 'left',
+	color,
+	topic,
+	time,
+	qos,
+	content,
+} = defineProps<{
+	placement?: 'left' | 'right'
+	color: string
+	topic: string
+	time: string
+	qos: number
+	content: any
+}>()
 const { t } = useI18n<{ message: MessageSchema }>()
-
-const code = ref<string>()
-onMounted(async () => {
-	code.value = await highlight(
-		JSON.stringify(
-			JSON.parse(
-				`{
-	"bid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx",
-	"data": {
-		"output": {
-			"progress": {
-				"percent": 20,
-				"step_key": "write_reboot_param_file"
-			},
-			"status": "in_progress"
-		},
-		"result": 0
-	},
-	"tid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx",
-	"timestamp": 1654070968655,
-	"method": "device_reboot"
-}`,
-			),
-			null,
-			2,
-		),
-	)
-})
+const { decodeMessageBy } = useContent()
 </script>
 
 <template>
@@ -45,7 +33,7 @@ onMounted(async () => {
 				<span>thing/product/4TADL610010400/services</span>
 				<NTag size="tiny">Qos 0</NTag>
 			</div>
-			<OverlayScrollbar class="content_body" x="scroll" y="hidden" v-html="code"> </OverlayScrollbar>
+			<OverlayScrollbar class="content_body" x="scroll" y="hidden"> </OverlayScrollbar>
 			<div class="content_footer">2024-10-16 18:19:13:612</div>
 		</div>
 		<div class="tools">
@@ -67,7 +55,7 @@ onMounted(async () => {
 						</template>
 					</NButton>
 				</template>
-				{{ t('common.copy') }}
+				{{ t('connection.for_publishing') }}
 			</NTooltip>
 		</div>
 	</div>
