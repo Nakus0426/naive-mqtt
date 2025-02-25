@@ -179,9 +179,7 @@ const treeNodeProps: TreeNodeProps = ({ option }) => {
 									color={`var(--${enabled ? 'error' : 'success'}-color)`}
 								/>
 							),
-							disabled: !connected.value,
 							data: option.data,
-							tooltipContent: 'connection.connect_first',
 						},
 						{ key: nanoid(), type: 'divider' },
 						{
@@ -229,10 +227,18 @@ const handleTreeDropdownSelect: OnDropdownSelect = async (value, option) => {
 	const isGroup = option.data['isGroup']
 	const id = option.data['id']
 	if (value === TreeDropdownOptionsKeyEnum.Enable) {
-		subscribe(toRaw(option.data as unknown as Subscription))
+		if (connected.value) subscribe(toRaw(option.data as Subscription))
+		else {
+			option.data['enabled'] = true
+			connectionsStore.updateSubscription(option.data as Subscription)
+		}
 	}
 	if (value === TreeDropdownOptionsKeyEnum.Disable) {
-		unsubscribe(toRaw(option.data as unknown as Subscription))
+		if (connected.value) unsubscribe(toRaw(option.data as unknown as Subscription))
+		else {
+			option.data['enabled'] = false
+			connectionsStore.updateSubscription(option.data as Subscription)
+		}
 	}
 	if (value === TreeDropdownOptionsKeyEnum.Rename) {
 		const subscription = structuredClone(await connectionsStore.getSubscription(clientId, id))

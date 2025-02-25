@@ -4,19 +4,11 @@ import {
 	type Subscription,
 	ConnectionStatusUpdateEventKey,
 	ConnectionUpdateEventKey,
+	DecodeMessageByEnum,
 	SubscriptionUpdateEventKey,
 	useConnectionsStore,
 } from '@/store/modules/connections.ts'
 import { isEmpty } from 'es-toolkit/compat'
-
-export enum DecodeMessageByEnum {
-	Plaintext = 'Plaintext',
-	JSON = 'Json',
-	Base64 = 'Base64',
-	Hex = 'Hex',
-	CBOR = 'CBOR',
-	MsgPack = 'MsgPack',
-}
 
 const [useProvideContent, useContent] = createInjectionState((clientId: Connection['clientId']) => {
 	const connectionsStore = useConnectionsStore()
@@ -79,9 +71,13 @@ const [useProvideContent, useContent] = createInjectionState((clientId: Connecti
 
 	function initSubscriptionStatus() {
 		subscriptionTree.value.forEach(node => {
-			const { enabled, id, children } = node
-			enabled && !subscriptionStatus.value.get(id) && subscribe(node)
-			children.forEach(child => child.enabled && !subscriptionStatus.value.get(child.id) && subscribe(child))
+			const init = _node => {
+				const { enabled, id } = _node
+				if (connected.value && enabled && (!subscriptionStatus.value.has(id) || !subscriptionStatus.value.get(id)))
+					subscribe(_node)
+			}
+			init(node)
+			node.children.forEach(init)
 		})
 	}
 
@@ -123,7 +119,30 @@ const [useProvideContent, useContent] = createInjectionState((clientId: Connecti
 	}
 	//#endregion
 
-	const decodeMessageBy = ref(DecodeMessageByEnum.Plaintext)
+	const decodeMessageBy = computed<DecodeMessageByEnum>({
+		get() {
+			return connection.value?.decodeMessageBy ?? DecodeMessageByEnum.Plaintext
+		},
+		set(value) {
+			connection.value.decodeMessageBy = value
+			connectionsStore.updateConnection(connection.value)
+		},
+	})
+	const messages = computed(() =>
+		connectionsStore.messages
+			.filter(item => item.clientId === clientId)
+			.map(item => {
+				let subscription: Subscription
+				const findSubscription = (node: Subscription) => {
+					if (node.topic === item.topic) subscription = node
+				}
+				subscriptionTree.value.forEach(node => {
+					if (node.isGroup) node.children?.forEach(findSubscription)
+					else findSubscription(node)
+				})
+				return { ...item, subscriptionId: subscription?.id, color: subscription?.color }
+			}),
+	)
 
 	return {
 		clientId,
@@ -136,6 +155,7 @@ const [useProvideContent, useContent] = createInjectionState((clientId: Connecti
 		publishDataValidateRes,
 		publishLoading,
 		decodeMessageBy,
+		messages,
 		subscribe,
 		unsubscribe,
 		publishValidate,

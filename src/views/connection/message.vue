@@ -3,24 +3,30 @@ import { highlight } from '@/hooks/useShiki'
 import { useI18n } from 'vue-i18n'
 import { type MessageSchema } from '@/configs/i18n'
 import { useContent } from './use-content'
+import { DecodeMessageByEnum, Message } from '@/store/modules/connections'
+import { format, parse } from 'date-fns'
 
 const {
 	placement = 'left',
 	color,
 	topic,
-	time,
+	timestamp,
 	qos,
 	content,
 } = defineProps<{
 	placement?: 'left' | 'right'
-	color: string
-	topic: string
-	time: string
-	qos: number
-	content: any
+	color?: string
+	topic?: string
+	timestamp?: number
+	qos?: number
+	content?: Message['message']
 }>()
 const { t } = useI18n<{ message: MessageSchema }>()
 const { decodeMessageBy } = useContent()
+
+const message = computed(() => {
+	if (decodeMessageBy.value === DecodeMessageByEnum.Plaintext) return new TextDecoder().decode(content)
+})
 </script>
 
 <template>
@@ -30,11 +36,13 @@ const { decodeMessageBy } = useContent()
 		</div>
 		<div class="content">
 			<div class="content_header">
-				<span>thing/product/4TADL610010400/services</span>
-				<NTag size="tiny">Qos 0</NTag>
+				<span>{{ topic }}</span>
+				<NTag size="tiny">{{ `Qos ${qos}` }}</NTag>
 			</div>
-			<OverlayScrollbar class="content_body" x="scroll" y="hidden"> </OverlayScrollbar>
-			<div class="content_footer">2024-10-16 18:19:13:612</div>
+			<OverlayScrollbar class="content_body" x="scroll" y="hidden">
+				<span v-if="decodeMessageBy === DecodeMessageByEnum.Plaintext">{{ message }}</span>
+			</OverlayScrollbar>
+			<div class="content_footer">{{ format(new Date(timestamp), 'yyyy-MM-dd HH:mm:ss:SSS') }}</div>
 		</div>
 		<div class="tools">
 			<NTooltip placement="right">
@@ -65,6 +73,7 @@ const { decodeMessageBy } = useContent()
 .message {
 	display: flex;
 	gap: 8px;
+	padding-top: 8px;
 
 	&:hover {
 		.content_footer {
@@ -76,8 +85,8 @@ const { decodeMessageBy } = useContent()
 		}
 	}
 
-	&:first-child {
-		margin-top: 8px;
+	&:last-child {
+		padding-bottom: 8px;
 	}
 
 	&[placement='right'] {
@@ -121,12 +130,12 @@ const { decodeMessageBy } = useContent()
 	align-items: center;
 	border: 1px solid var(--divider-color);
 	border-radius: 50%;
-	background-color: green;
-	color: color-contrast(green vs #000, #fff);
+	background-color: v-bind('color');
+	color: color-contrast(v-bind('color') vs #000, #fff);
 }
 
 .content {
-	width: 70%;
+	max-width: 70%;
 	display: flex;
 	flex-direction: column;
 	gap: 4px;

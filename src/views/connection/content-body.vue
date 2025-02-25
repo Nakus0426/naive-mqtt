@@ -1,8 +1,8 @@
 <script setup lang="tsx">
 import { useI18n } from 'vue-i18n'
 import { type MessageSchema } from '@/configs/i18n'
-import { useConnectionsStore } from '@/store/modules/connections'
-import { DecodeMessageByEnum, useContent } from './use-content'
+import { useConnectionsStore, DecodeMessageByEnum } from '@/store/modules/connections'
+import { useContent } from './use-content'
 import PublishSetting from './publish-setting.vue'
 import Message from './message.vue'
 import { NFlex, NPopselect, type SelectOption } from 'naive-ui'
@@ -17,6 +17,7 @@ const {
 	publishDataValidateRes,
 	publishLoading,
 	decodeMessageBy,
+	messages,
 	publish: publishFunc,
 } = useContent()
 
@@ -122,9 +123,15 @@ function publish() {
 					</NTooltip>
 				</NPopselect>
 			</div>
-			<NVirtualList class="body_content" item-resizable :item-size="63" :items="[]">
+			<NVirtualList class="body_content" item-resizable :item-size="63" :items="messages">
 				<template #default="{ item }">
-					<Message color="" topic="" time="" :qos="0" content="" />
+					<Message
+						:color="item.color"
+						:topic="item.topic"
+						:timestamp="item.timestamp"
+						:qos="item.packet.qos"
+						:content="item.message"
+					/>
 				</template>
 			</NVirtualList>
 		</div>

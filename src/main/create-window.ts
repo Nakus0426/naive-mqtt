@@ -48,7 +48,6 @@ export function createWindow(options?: Options) {
 		minWidth,
 		minHeight,
 		resizable,
-		maximizable: false,
 		show: false,
 		parent,
 		modal: !!parent,

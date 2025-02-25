@@ -10,6 +10,7 @@ import { nanoid } from 'nanoid'
 import { EventBusKey } from '@vueuse/core'
 
 const CONNECTIONS_STORAGE_KEY = 'connections'
+const MESSAGES_STORAGE_KEY = 'messages'
 
 export enum EditTypeEnum {
 	New,
@@ -22,6 +23,7 @@ export type Connection = {
 	isGroup?: boolean
 	editType?: EditTypeEnum
 	children?: Array<Connection>
+	decodeMessageBy?: DecodeMessageByEnum
 } & Record<string, any> &
 	IClientOptions
 
@@ -49,6 +51,25 @@ export type PublishData = {
 	options?: IClientPublishOptions
 }
 
+export enum DecodeMessageByEnum {
+	Plaintext = 'Plaintext',
+	JSON = 'Json',
+	Base64 = 'Base64',
+	Hex = 'Hex',
+	CBOR = 'CBOR',
+	MsgPack = 'MsgPack',
+}
+
+export type Message = {
+	clientId: string
+	topic: string
+	message: Buffer
+	packet: IPublishPacket
+	subscriptionId?: string
+	color?: string
+	timestamp: number
+}
+
 /**
  * 连接
  */
@@ -63,6 +84,7 @@ export const useConnectionsStore = defineStore(
 
 		async function init() {
 			connectionTree.value = await getConnectionTree()
+			messages.value = await getMessages()
 			window.electronAPI.onMqttConnect(handleConnectionConnected)
 			window.electronAPI.onMqttDisconnect(handleConnectionDisconnected)
 			window.electronAPI.onMqttError(handleConnectionError)
@@ -289,8 +311,15 @@ export const useConnectionsStore = defineStore(
 		}
 		//#endregion
 
+		const messages = ref<Array<Message>>([])
+
 		function handleMessage(clientId: string, topic: string, message: Buffer, packet: IPublishPacket) {
-			console.log(clientId, topic, message, packet)
+			messages.value.push({ clientId, topic, message, packet, timestamp: new Date().valueOf() })
+			setItem(MESSAGES_STORAGE_KEY, toRaw(messages.value))
+		}
+
+		async function getMessages() {
+			return (await getItem<Array<Message>>(MESSAGES_STORAGE_KEY)) || []
 		}
 
 		return {
@@ -302,6 +331,7 @@ export const useConnectionsStore = defineStore(
 			connectionTree,
 			connectionStatus,
 			contentFooterCollapsed,
+			messages,
 			init,
 			newConnection,
 			deleteConnection,
