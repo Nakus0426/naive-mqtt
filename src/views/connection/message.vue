@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { type MessageSchema } from '@/configs/i18n'
 import { useContent } from './use-content'
 import { DecodeMessageByEnum, Message } from '@/store/modules/connections'
-import { format, parse } from 'date-fns'
+import { format } from 'date-fns'
 
 const {
 	placement = 'left',
@@ -24,8 +24,13 @@ const {
 const { t } = useI18n<{ message: MessageSchema }>()
 const { decodeMessageBy } = useContent()
 
-const message = computed(() => {
+const message = computed(async () => {
 	if (decodeMessageBy.value === DecodeMessageByEnum.Plaintext) return new TextDecoder().decode(content)
+	if (decodeMessageBy.value === DecodeMessageByEnum.JSON) {
+		let text = new TextDecoder().decode(content)
+		text = JSON.stringify(JSON.parse(text), null, 2)
+		return highlight(text)
+	}
 })
 </script>
 
@@ -41,6 +46,7 @@ const message = computed(() => {
 			</div>
 			<OverlayScrollbar class="content_body" x="scroll" y="hidden">
 				<span v-if="decodeMessageBy === DecodeMessageByEnum.Plaintext">{{ message }}</span>
+				<div v-if="decodeMessageBy === DecodeMessageByEnum.JSON" v-html="message" />
 			</OverlayScrollbar>
 			<div class="content_footer">{{ format(new Date(timestamp), 'yyyy-MM-dd HH:mm:ss:SSS') }}</div>
 		</div>
