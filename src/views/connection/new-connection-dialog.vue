@@ -8,11 +8,14 @@ import { type OnUpdateValueImpl as OnSelectUpdate } from 'naive-ui/es/select/src
 import { type OnUpdateValueImpl as OnSwitchUpdate } from 'naive-ui/es/switch/src/interface'
 import { type OnSelectImpl as OnAutoCompleteSelect } from 'naive-ui/es/auto-complete/src/interface'
 import { useConnection } from './use-connection'
+import { useService } from 'electron-bridge-ipc/electron-sandbox'
+import { type IMainService, ChannelNameEnum } from '@/main/services/interface'
 
 const { t } = useI18n<{ message: MessageSchema }>()
 const connectionStore = useConnectionsStore()
 const { newConnectionDialogEventHook } = useConnection()
 const icon = () => <Icon icon="tabler:layers-linked" />
+const mainService = useService<IMainService>(ChannelNameEnum.Main)
 
 //#region 打开弹窗
 const visible = ref(false)
@@ -92,7 +95,7 @@ function handleCertificateUpdate(value: CertificateKeyEnum) {
 async function handleFilePickerClick(type: 'ca' | 'cert' | 'key') {
 	try {
 		caFileDialogLoading.value[type] = true
-		const paths = await window.electronAPI.openFileDialog({
+		const paths = await mainService.openFileDialog({
 			properties: ['openFile'],
 			filters: [{ name: 'CA', extensions: ['crt', 'key', 'pem', 'jks', 'der', 'cer', 'pfx'] }],
 		})

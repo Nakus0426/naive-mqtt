@@ -8,11 +8,13 @@ import {
 } from 'mqtt'
 import { nanoid } from 'nanoid'
 import { EventBusKey } from '@vueuse/core'
+import { useService } from 'electron-bridge-ipc/electron-sandbox'
+import { type IMqttService, ChannelNameEnum, MqttServiceEventEnum } from '@/main/services/interface.ts'
 
 const CONNECTIONS_STORAGE_KEY = 'connections'
 const MESSAGES_STORAGE_KEY = 'messages'
 
-export enum EditTypeEnum {
+export const enum EditTypeEnum {
 	New,
 	Rename,
 }
@@ -76,6 +78,8 @@ export type Message = {
 export const useConnectionsStore = defineStore(
 	'CONNECTIONS',
 	() => {
+		const mqttService = useService<IMqttService>(ChannelNameEnum.Mqtt)
+
 		const sideWidth = ref(300)
 		const sideCollapsed = ref(false)
 		const contentSideWidth = ref(200)
@@ -85,10 +89,10 @@ export const useConnectionsStore = defineStore(
 		async function init() {
 			connectionTree.value = await getConnectionTree()
 			messages.value = await getMessages()
-			window.electronAPI.onMqttConnect(handleConnectionConnected)
-			window.electronAPI.onMqttDisconnect(handleConnectionDisconnected)
-			window.electronAPI.onMqttError(handleConnectionError)
-			window.electronAPI.onMqttMessage(handleMessage)
+			mqttService.on(MqttServiceEventEnum.Connected, handleConnectionConnected)
+			mqttService.on(MqttServiceEventEnum.Disconnected, handleConnectionDisconnected)
+			mqttService.on(MqttServiceEventEnum.Error, handleConnectionError)
+			mqttService.on(MqttServiceEventEnum.Message, handleMessage)
 			initConnectionStatus()
 		}
 
@@ -103,7 +107,7 @@ export const useConnectionsStore = defineStore(
 				if (node.isGroup) node.children.forEach(child => clientIdList.push(child.clientId))
 				else clientIdList.push(node.clientId)
 			})
-			connectionStatus.value = window.electronAPI.mqttConnectedBatch(clientIdList)
+			connectionStatus.value = mqttService.connected(clientIdList) as Map<string, boolean>
 		}
 
 		async function getConnectionTree() {
@@ -191,7 +195,7 @@ export const useConnectionsStore = defineStore(
 			try {
 				const connection = getConnection(clientId)
 				if (!connection) return
-				const { success, message } = await window.electronAPI.mqttConnect(connection)
+				const { success, message } = await mqttService.connect(connection)
 				if (success) {
 					connectionStatus.value.set(clientId, true)
 					useEventBus(ConnectionStatusUpdateEventKey).emit({ clientId, connected: true })
@@ -203,7 +207,7 @@ export const useConnectionsStore = defineStore(
 
 		async function disconnect(clientId: string) {
 			try {
-				const { success, message } = await window.electronAPI.mqttDisconnect(clientId)
+				const { success, message } = await mqttService.disconnect(clientId)
 				if (success) {
 					connectionStatus.value.set(clientId, false)
 					useEventBus(ConnectionStatusUpdateEventKey).emit({ clientId, connected: false })

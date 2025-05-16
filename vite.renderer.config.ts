@@ -6,7 +6,7 @@ import AutoImport from 'unplugin-auto-import/vite'
 import { NaiveUiResolver } from 'unplugin-vue-components/resolvers'
 import VueDevtools from 'vite-plugin-vue-devtools'
 import type { ComponentResolver } from 'unplugin-vue-components/types'
-import { pluginExposeRenderer } from './vite.base.config'
+import { pluginExposeRenderer } from './vite.base.config.ts'
 
 export default defineConfig(env => {
 	const forgeEnv = env as ConfigEnv<'renderer'>

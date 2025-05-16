@@ -9,6 +9,10 @@ import {
 	useConnectionsStore,
 } from '@/store/modules/connections.ts'
 import { isEmpty } from 'es-toolkit/compat'
+import { useService } from 'electron-bridge-ipc/electron-sandbox'
+import { type IMqttService, ChannelNameEnum } from '@/main/services/interface.ts'
+
+const mqttService = useService<IMqttService>(ChannelNameEnum.Mqtt)
 
 const [useProvideContent, useContent] = createInjectionState((clientId: Connection['clientId']) => {
 	const connectionsStore = useConnectionsStore()
@@ -46,7 +50,7 @@ const [useProvideContent, useContent] = createInjectionState((clientId: Connecti
 	async function subscribe(subscription: Subscription) {
 		const { id } = subscription
 		if (subscriptionStatus.value.get(id)) return
-		const { success, message } = await window.electronAPI.mqttSubscribe(toRaw(subscription))
+		const { success, message } = mqttService.subscribe(toRaw(subscription))
 		if (!success && message) window.$message.error(message)
 		subscriptionStatus.value.set(id, true)
 		subscription.enabled = true
@@ -56,7 +60,7 @@ const [useProvideContent, useContent] = createInjectionState((clientId: Connecti
 	async function unsubscribe(subscription: Subscription) {
 		const { id } = subscription
 		if (subscriptionStatus.value.has(id) && !subscriptionStatus.value.get(id)) return
-		const { success, message } = await window.electronAPI.mqttUnsubscribe(toRaw(subscription))
+		const { success, message } = mqttService.unsubscribe(toRaw(subscription))
 		if (!success && message) window.$message.error(message)
 		subscriptionStatus.value.set(id, false)
 		subscription.enabled = false
@@ -109,7 +113,7 @@ const [useProvideContent, useContent] = createInjectionState((clientId: Connecti
 		try {
 			publishLoading.value = true
 			if (!publishValidate()) return
-			const { success, message } = await window.electronAPI.mqttPublish(toRaw(publishData.value))
+			const { success, message } = mqttService.publish(toRaw(publishData.value))
 			if (!success) window.$message.error(message)
 		} catch ({ message }) {
 			window.$message.error(message)

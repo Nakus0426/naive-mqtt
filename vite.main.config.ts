@@ -9,7 +9,7 @@ export default defineConfig(env => {
 		build: {
 			lib: {
 				entry: forgeConfigSelf.entry!,
-				fileName: () => '[name].mjs',
+				fileName: () => '[name].js',
 				formats: [esModule ? 'es' : 'cjs'],
 			},
 			rollupOptions: {

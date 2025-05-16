@@ -1,6 +1,8 @@
 import { defaultPrimaryColorDark, defaultPrimaryColorLight } from '@/configs/theme.ts'
 import { type NativeTheme } from 'electron'
 import { defineStore } from 'pinia'
+import { useService } from 'electron-bridge-ipc/electron-sandbox'
+import { type IMainService, ChannelNameEnum, MainServiceEventEnum } from '@/main/services/interface.ts'
 
 /**
  * 系统状态
@@ -8,10 +10,12 @@ import { defineStore } from 'pinia'
 export const useAppStore = defineStore(
 	'APP',
 	() => {
+		const mainService = useService<IMainService>(ChannelNameEnum.Main)
+
 		//#region 主题
 		const isDarkTheme = useDark({ selector: 'html', attribute: 'color-scheme', valueDark: 'dark', valueLight: 'light' })
 		const theme = ref<NativeTheme['themeSource']>('system')
-		theme.value = window.electronAPI.getTheme()
+		theme.value = mainService.getTheme()
 		//#endregion
 
 		//#region 强调色
@@ -25,7 +29,7 @@ export const useAppStore = defineStore(
 		}
 
 		function primaryColorFollowSystem() {
-			const accentColor = `#${window.electronAPI.getAccentColor()}`
+			const accentColor = `#${mainService.getAccentColor()}`
 			primaryColor.value = accentColor
 				? accentColor
 				: isDarkTheme.value
@@ -33,13 +37,13 @@ export const useAppStore = defineStore(
 					: defaultPrimaryColorLight
 		}
 
-		window.electronAPI.onAccentColorChanged(color => (primaryColor.value = `#${color}`))
+		mainService.on(MainServiceEventEnum.AccentColorChanged, color => (primaryColor.value = `#${color}`))
 		//#endregion
 
 		const isMenuCollapsed = ref(true)
 
 		const locale = ref('zh-CN')
-		locale.value = window.electronAPI.getLocale()
+		locale.value = mainService.getLocale()
 
 		return {
 			isDarkTheme,

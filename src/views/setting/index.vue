@@ -7,9 +7,12 @@ import ThemeDarkImage from '@/assets/images/theme_dark.svg'
 import { useI18n } from 'vue-i18n'
 import { type MessageSchema } from '@/configs/i18n'
 import { SelectBaseOption } from 'naive-ui/es/select/src/interface'
+import { useService } from 'electron-bridge-ipc/electron-sandbox'
+import { type IMainService, ChannelNameEnum } from '@/main/services/interface'
 
 const { t, locale, messages } = useI18n<{ message: MessageSchema }>()
 const appStore = useAppStore()
+const mainService = useService<IMainService>(ChannelNameEnum.Main)
 
 const [DefineCell, Cell] = createReusableTemplate<{ title: string }>({ inheritAttrs: false })
 const [DefineCellItem, CellItem] = createReusableTemplate<{ label: string }>()
@@ -21,7 +24,7 @@ const [DefineThemeRadio, ThemeRadio] = createReusableTemplate<{ theme: NativeThe
 const themeRadioImageMap = { system: ThemeSystemImage, light: ThemeLightImage, dark: ThemeDarkImage }
 
 function handleThemeUpdate(theme: NativeTheme['themeSource']) {
-	window.electronAPI.updateTheme(theme)
+	mainService.updateTheme(theme)
 	appStore.theme = theme
 }
 //#endregion

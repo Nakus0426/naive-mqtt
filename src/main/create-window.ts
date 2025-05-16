@@ -1,9 +1,6 @@
 import { BrowserWindow, nativeTheme } from 'electron'
 import { nanoid } from 'nanoid'
-import { join, dirname } from 'node:path'
-import { fileURLToPath } from 'node:url'
-
-const __dirname = dirname(fileURLToPath(import.meta.url))
+import { join } from 'node:path'
 
 type Options = {
 	id?: string
@@ -59,16 +56,18 @@ export function createWindow(options?: Options) {
 		},
 		backgroundMaterial: 'mica',
 		webPreferences: {
-			preload: join(__dirname, 'preload.mjs'),
+			preload: join(import.meta.dirname, 'preload.mjs'),
 			experimentalFeatures: true,
 			scrollBounce: true,
 			backgroundThrottling: false,
 			spellcheck: false,
+			sandbox: true,
+			contextIsolation: true,
 		},
 	})
 
 	if (MAIN_WINDOW_VITE_DEV_SERVER_URL) browserWindow.loadURL(`${MAIN_WINDOW_VITE_DEV_SERVER_URL}${hash || ''}`)
-	else browserWindow.loadFile(join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`), { hash })
+	else browserWindow.loadFile(join(import.meta.dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`), { hash })
 
 	if (showImmediately) browserWindow.once('ready-to-show', () => browserWindow.show())
 

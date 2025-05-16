@@ -1,9 +1,12 @@
-import { app, BrowserWindow, ipcMain, nativeTheme, dialog, systemPreferences } from 'electron'
+import { app, BrowserWindow, nativeTheme } from 'electron'
 import started from 'electron-squirrel-startup'
 import { createWindow } from './create-window.ts'
 import { store } from './store.ts'
-import { Main } from './interface.ts'
-import { mqtt } from './mqtt.ts'
+import { MqttService } from './services/mqtt-service.ts'
+import { MainService } from './services/main-service.ts'
+import { createServer } from 'electron-bridge-ipc/electron-main'
+import { DisposableStore, ProxyChannel } from 'electron-bridge-ipc'
+import { ChannelNameEnum } from './services/interface.ts'
 
 if (started) app.quit()
 
@@ -20,32 +23,13 @@ app.on('activate', () => {
 let mainWindow: BrowserWindow
 
 function createMainWindow() {
+	const server = createServer()
+	const disposables = new DisposableStore()
+	const mainService = new MainService()
+	server.registerChannel(ChannelNameEnum.Mqtt, ProxyChannel.fromService(new MqttService(), disposables))
+	server.registerChannel(ChannelNameEnum.Main, ProxyChannel.fromService(mainService, disposables))
 	mainWindow = createWindow()
+	mainService.mainWindow = mainWindow
 	nativeTheme.themeSource = store.get('theme') || 'system'
 	store.set('theme', nativeTheme.themeSource)
-	mqtt(mainWindow)
 }
-
-ipcMain.on(Main.UpdateTheme, (_event, theme) => {
-	nativeTheme.themeSource = theme
-	mainWindow.setTitleBarOverlay({
-		color: 'rgba(0, 0, 0, 0)',
-		symbolColor: nativeTheme.shouldUseDarkColors ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.9)',
-	})
-	store.set('theme', theme)
-})
-
-ipcMain.on(Main.GetTheme, event => (event.returnValue = nativeTheme.themeSource))
-
-ipcMain.on(Main.GetLocale, event => (event.returnValue = app.getLocale()))
-
-ipcMain.handle(Main.OpenFileDialog, async (event, options) => {
-	const { filePaths } = await dialog.showOpenDialog(mainWindow, options)
-	return filePaths
-})
-
-ipcMain.on(Main.GetAccentColor, event => (event.returnValue = systemPreferences.getAccentColor()))
-
-systemPreferences.on('accent-color-changed', (_event, color) => {
-	mainWindow.webContents.send(Main.OnAccentColorChanged, color)
-})
